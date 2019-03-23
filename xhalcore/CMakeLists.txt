@@ -25,6 +25,8 @@ target_link_libraries(xhal_helpers
 )
 
 install(TARGETS xhal_helpers
+  EXPORT xHALConfig
+  INCLUDES DESTINATION include/
   LIBRARY DESTINATION lib/
 )
 
@@ -40,6 +42,8 @@ target_link_libraries(xhal_core
 )
 
 install(TARGETS xhal_core
+  EXPORT xHALConfig
+  INCLUDES DESTINATION include/
   LIBRARY DESTINATION lib/
 )
 
@@ -57,6 +61,8 @@ target_link_libraries(rpcman
 )
 
 install(TARGETS rpcman
+  EXPORT xHALConfig
+  INCLUDES DESTINATION include/
   LIBRARY DESTINATION lib/
 )
 
@@ -75,6 +81,9 @@ target_link_libraries(xhalpy
 )
 
 install(TARGETS xhalpy
+  EXPORT xHALConfig
+  INCLUDES DESTINATION include/
   LIBRARY DESTINATION lib/
 )
 
+install(EXPORT xHALConfig NAMESPACE xHAL:: DESTINATION share/xHAL)
