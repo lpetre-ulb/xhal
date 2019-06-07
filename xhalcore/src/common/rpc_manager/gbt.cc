@@ -1,6 +1,6 @@
 #include "xhal/rpc/gbt.h"
 
-DLLEXPORT uint32_t scanGBTPhases(uint32_t *results, uint32_t ohN, uint32_t nScans, uint32_t phaseMin, uint32_t phaseMax, uint32_t phaseStep, uint32_t NVFAT = 24)
+DLLEXPORT uint32_t scanGBTPhases(uint32_t *results, uint32_t ohN, uint32_t nScans, uint32_t phaseMin, uint32_t phaseMax, uint32_t phaseStep, uint32_t nVFAT)
 {
     req = wisc::RPCMsg("gbt.scanGBTPhases");
 
@@ -22,7 +22,7 @@ DLLEXPORT uint32_t scanGBTPhases(uint32_t *results, uint32_t ohN, uint32_t nScan
         return 1;
     }
 
-    for (unsigned int vfatN = 0; vfatN < NVFAT; vfatN++)
+    for (unsigned int vfatN = 0; vfatN < nVFAT; vfatN++)
     {
         const std::string resultsKey = "OH" + std::to_string(ohN) + ".VFAT" + std::to_string(vfatN);
         if (rsp.get_key_exists(resultsKey)){
