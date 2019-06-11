@@ -187,7 +187,7 @@ DLLEXPORT uint32_t getmonDAQOHmain(uint32_t* result, uint32_t noh, uint32_t ohMa
     return 0;
 }
 
-DLLEXPORT uint32_t getmonGBTLink(struct OHLinkMonitor *ohLinkMon, uint32_t noh, uint32_t ohMask, bool doReset)
+DLLEXPORT uint32_t getmonGBTLink(struct OHLinkMonitor *ohLinkMon, uint32_t noh, uint32_t ohMask, bool doReset, uint32_t NGBT)
 {
     req = wisc::RPCMsg("daq_monitor.getmonGBTLink");
     req.set_word("NOH",noh);
@@ -211,7 +211,7 @@ DLLEXPORT uint32_t getmonGBTLink(struct OHLinkMonitor *ohLinkMon, uint32_t noh, 
 
                 std::string strOHN = "OH" + std::to_string(ohN) + ".";
 
-                for(int gbtN = 0; gbtN < 3; ++gbtN){
+                for(int gbtN = 0; gbtN < NGBT; ++gbtN){
                     std::string strGBTN = "GBT" + std::to_string(gbtN) + ".";
 
                     ohLinkMon[ohN].gbtRdy[gbtN] = rsp.get_word(strOHN + strGBTN + "READY");

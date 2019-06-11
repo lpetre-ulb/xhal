@@ -60,7 +60,7 @@ def gbtPhaseScan(cardName, ohMask = 0xfff, nOHs=12, nOfRepetitions=100, silent=T
 
         # Scan phases
         phasesBlob = (c_uint32 * (nVFAT*16))()
-        scanGBTPhases(phasesBlob, ohN, nOfRepetitions, 0, 15, 1)
+        scanGBTPhases(phasesBlob, ohN, nOfRepetitions, 0, 15, 1, nVFAT)
         dict_phaseScanResults[ohN] = phasesBlob
 
         # stdout output

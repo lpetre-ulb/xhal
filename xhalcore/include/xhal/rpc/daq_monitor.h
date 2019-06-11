@@ -58,7 +58,7 @@ DLLEXPORT uint32_t getmonTRIGGERmain(uint32_t* result, uint32_t noh = 12, uint32
 DLLEXPORT uint32_t getmonTRIGGEROHmain(uint32_t* result, uint32_t noh = 12, uint32_t ohMask = 0xff);
 DLLEXPORT uint32_t getmonDAQmain(uint32_t* result);
 DLLEXPORT uint32_t getmonDAQOHmain(uint32_t* result, uint32_t noh = 12, uint32_t ohMask = 0xfff);
-DLLEXPORT uint32_t getmonGBTLink(struct OHLinkMonitor *ohLinkMon, uint32_t noh = 12, uint32_t ohMask = 0xfff, bool doReset = false);
+DLLEXPORT uint32_t getmonGBTLink(struct OHLinkMonitor *ohLinkMon, uint32_t noh = 12, uint32_t ohMask = 0xfff, bool doReset = false, uint32_t NGBT=3);
 DLLEXPORT uint32_t getmonOHLink(struct OHLinkMonitor *ohLinkMon, struct VFATLinkMonitor *vfatLinkMon, uint32_t noh = 12, uint32_t ohMask = 0xfff, bool doReset = false);
 DLLEXPORT uint32_t getmonOHmain(uint32_t* result, uint32_t noh = 12, uint32_t ohMask = 0xfff);
 DLLEXPORT uint32_t getmonOHSCAmain(struct SCAMonitor *scaMon, uint32_t noh = 12, uint32_t ohMask = 0xfff);
