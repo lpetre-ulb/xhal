@@ -26,7 +26,7 @@ DLLEXPORT uint32_t broadcastRead(uint32_t ohN, char * regName, uint32_t vfatMask
         return 1;
     }
     else if (rsp.get_key_exists("data")) {
-        const uint32_t size = 24;
+        const uint32_t size = 12; //FIXME: need to get the expected size == nVFATs
         ASSERT(rsp.get_word_array_size("data") == size);
         rsp.get_word_array("data", result);
     } else {
@@ -166,7 +166,7 @@ DLLEXPORT uint32_t getUltraScanResults(uint32_t ohN, uint32_t nevts, uint32_t da
         printf("Caught an error: %s\n", (rsp.get_string("error")).c_str());
         return 1;
     }
-    const uint32_t size = (dacMax - dacMin+1)*24/dacStep;
+    const uint32_t size = (dacMax - dacMin+1)*12/dacStep; //FIXME need to get the expected size == nVFATs
     if (rsp.get_key_exists("data")) {
         ASSERT(rsp.get_word_array_size("data") == size);
         rsp.get_word_array("data", result);
