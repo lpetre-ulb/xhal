@@ -193,12 +193,21 @@ DLLEXPORT uint32_t setChannelRegistersVFAT3(uint32_t ohN, uint32_t vfatMask, uin
     req.set_word("ohN",ohN);
     req.set_word("vfatMask",vfatMask);
 
-    req.set_word_array("calEnable",calEnable,3072);
-    req.set_word_array("masks",masks,3072);
-    req.set_word_array("trimARM",trimARM,3072);
-    req.set_word_array("trimARMPol",trimARMPol,3072);
-    req.set_word_array("trimZCC",trimZCC,3072);
-    req.set_word_array("trimZCCPol",trimZCCPol,3072);
+    //req.set_word_array("calEnable",calEnable,3072);
+    //req.set_word_array("masks",masks,3072);
+    //req.set_word_array("trimARM",trimARM,3072);
+    //req.set_word_array("trimARMPol",trimARMPol,3072);
+    //req.set_word_array("trimZCC",trimZCC,3072);
+    //req.set_word_array("trimZCCPol",trimZCCPol,3072);
+
+    //FIXME
+    req.set_word_array("calEnable",calEnable,1536);
+    req.set_word_array("masks",masks,1536);
+    req.set_word_array("trimARM",trimARM,1536);
+    req.set_word_array("trimARMPol",trimARMPol,1536);
+    req.set_word_array("trimZCC",trimZCC,1536);
+    req.set_word_array("trimZCCPol",trimZCCPol,1536);
+
 
     wisc::RPCSvc* rpc_loc = getRPCptr();
 
@@ -222,7 +231,8 @@ DLLEXPORT uint32_t setChannelRegistersVFAT3Simple(uint32_t ohN, uint32_t vfatMas
     req.set_word("vfatMask",vfatMask);
     req.set_word("simple",true);
 
-    req.set_word_array("chanRegData",chanRegData,3072);
+    //req.set_word_array("chanRegData",chanRegData,3072);
+    req.set_word_array("chanRegData",chanRegData,1536); //FIXME
 
     wisc::RPCSvc* rpc_loc = getRPCptr();
 
