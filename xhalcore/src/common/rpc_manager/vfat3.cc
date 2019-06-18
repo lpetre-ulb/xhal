@@ -82,7 +82,8 @@ DLLEXPORT uint32_t getChannelRegistersVFAT3(uint32_t ohN, uint32_t vfatMask, uin
         return 1;
     }
 
-    const uint32_t size = 3072;
+    //const uint32_t size = 3072;
+    const uint32_t size = 1536; //FIXME nChannels depends on the GEM type
     if (rsp.get_key_exists("chanRegData")) {
         ASSERT(rsp.get_word_array_size("chanRegData") == size);
         rsp.get_word_array("chanRegData", chanRegData);
