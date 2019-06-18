@@ -196,7 +196,7 @@ DLLEXPORT uint32_t genScan(uint32_t nevts, uint32_t ohN, uint32_t dacMin, uint32
         printf("Caught an error: %s\n", (rsp.get_string("error")).c_str());
         return 1;
     }
-    const uint32_t size = (dacMax - dacMin+1)*24/dacStep;
+    const uint32_t size = (dacMax - dacMin+1)*12/dacStep; //FIXME
     if (rsp.get_key_exists("data")) {
         ASSERT(rsp.get_word_array_size("data") == size);
         rsp.get_word_array("data", result);
