@@ -94,7 +94,7 @@ DLLEXPORT uint32_t checkSbitRateWithCalPulse(uint32_t ohN, uint32_t vfatN, uint3
     return 0;
 } //End checkSbitRateWithCalPulse()
 
-DLLEXPORT uint32_t dacScan(uint32_t ohN, uint32_t dacSelect, uint32_t dacStep, uint32_t mask, bool useExtRefADC, uint32_t * results, nvfats){
+DLLEXPORT uint32_t dacScan(uint32_t ohN, uint32_t dacSelect, uint32_t dacStep, uint32_t mask, bool useExtRefADC, uint32_t * results, uint32_t nvfats){
     req = wisc::RPCMsg("calibration_routines.dacScan");
 
     req.set_word("ohN", ohN);
@@ -128,7 +128,7 @@ DLLEXPORT uint32_t dacScan(uint32_t ohN, uint32_t dacSelect, uint32_t dacStep, u
     return 0;
 } //End dacScan()
 
-DLLEXPORT uint32_t dacScanMultiLink(uint32_t ohMask, uint32_t NOH, uint32_t dacSelect, uint32_t dacStep, bool useExtRefADC, uint32_t * results, nvfats){
+DLLEXPORT uint32_t dacScanMultiLink(uint32_t ohMask, uint32_t NOH, uint32_t dacSelect, uint32_t dacStep, bool useExtRefADC, uint32_t * results, uint32_t nvfats){
     req = wisc::RPCMsg("calibration_routines.dacScanMultiLink");
 
     req.set_word("ohMask", ohMask);
