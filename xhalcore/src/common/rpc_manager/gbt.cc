@@ -1,6 +1,6 @@
 #include "xhal/rpc/gbt.h"
 
-DLLEXPORT uint32_t scanGBTPhases(uint32_t *results, uint32_t ohN, uint32_t nScans, uint32_t phaseMin, uint32_t phaseMax, uint32_t phaseStep, uint32_t nVFAT)
+DLLEXPORT uint32_t scanGBTPhases(uint32_t *results, uint32_t ohN, uint32_t nScans, uint32_t phaseMin, uint32_t phaseMax, uint32_t phaseStep, uint32_t nVFAT, uint32_t nVerificationReads)
 {
     req = wisc::RPCMsg("gbt.scanGBTPhases");
 
@@ -9,6 +9,7 @@ DLLEXPORT uint32_t scanGBTPhases(uint32_t *results, uint32_t ohN, uint32_t nScan
     req.set_word("phaseMin", phaseMin);
     req.set_word("phaseMax", phaseMax);
     req.set_word("phaseStep", phaseStep);
+    req.set_word("nVerificationReads", nVerificationReads);
 
     wisc::RPCSvc* rpc_loc = getRPCptr();
 

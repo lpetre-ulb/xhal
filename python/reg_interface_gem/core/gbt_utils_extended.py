@@ -39,7 +39,7 @@ def configGBT(cardName, listOfconfigFiles, ohMask = 0xfff, nOHs=12):
 
     return
 
-def gbtPhaseScan(cardName, ohMask = 0xfff, nOHs=12, nOfRepetitions=100, silent=True, outputFile=None, nVFAT=24):
+def gbtPhaseScan(cardName, ohMask = 0xfff, nOHs=12, nOfRepetitions=100, silent=True, outputFile=None, nVFAT=24, nVerificationReads=10):
     """
     Scan the VFAT phases for all optohybrids defined in ohMask.
 
@@ -60,7 +60,7 @@ def gbtPhaseScan(cardName, ohMask = 0xfff, nOHs=12, nOfRepetitions=100, silent=T
 
         # Scan phases
         phasesBlob = (c_uint32 * (nVFAT*16))()
-        scanGBTPhases(phasesBlob, ohN, nOfRepetitions, 0, 15, 1, nVFAT)
+        scanGBTPhases(phasesBlob, ohN, nOfRepetitions, 0, 15, 1, nVFAT, nVerificationReads)
         dict_phaseScanResults[ohN] = phasesBlob
 
         # stdout output
