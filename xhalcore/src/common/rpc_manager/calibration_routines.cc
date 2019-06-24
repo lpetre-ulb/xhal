@@ -394,7 +394,6 @@ DLLEXPORT uint32_t confCalPulse(uint32_t ohN, uint32_t mask, uint32_t ch, bool t
     }
     STANDARD_CATCH;
 
-
     if (rsp.get_key_exists("error")) {
         printf("Caught an error: %s\n", (rsp.get_string("error")).c_str());
         return 1;
