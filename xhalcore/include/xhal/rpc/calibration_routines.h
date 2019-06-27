@@ -49,5 +49,6 @@ DLLEXPORT uint32_t sbitRateScan(uint32_t ohMask, uint32_t dacMin, uint32_t dacMa
 DLLEXPORT uint32_t ttcGenConf(uint32_t ohN, uint32_t mode, uint32_t type, uint32_t pulseDelay,
         uint32_t L1Ainterval, uint32_t nPulses, bool enable);
 DLLEXPORT uint32_t ttcGenToggle(uint32_t ohN, bool enable);
+DLLEXPORT uint32_t confCalPulse(uint32_t ohN, uint32_t mask, uint32_t ch, bool toggleOn, bool currentPulse, uint32_t calScaleFactor);
 
 #endif

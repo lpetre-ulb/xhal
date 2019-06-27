@@ -376,3 +376,28 @@ DLLEXPORT uint32_t ttcGenToggle(uint32_t ohN, bool enable){
     }
     return 0;
 } //End ttcGenToggle(...)
+
+DLLEXPORT uint32_t confCalPulse(uint32_t ohN, uint32_t mask, uint32_t ch, bool toggleOn, bool currentPulse, uint32_t calScaleFactor) {
+    req = wisc::RPCMsg("calibration_routines.confCalPulse");
+
+    req.set_word("ohN", ohN);
+    req.set_word("ch", ch);
+    req.set_word("mask", mask);
+    req.set_word("toggleOn",toggleOn);
+    req.set_word("currentPulse", currentPulse);
+    req.set_word("calScaleFactor", calScaleFactor);
+
+    wisc::RPCSvc* rpc_loc = getRPCptr();
+
+    try {
+        rsp = rpc_loc->call_method(req);
+    }
+    STANDARD_CATCH;
+
+    if (rsp.get_key_exists("error")) {
+        printf("Caught an error: %s\n", (rsp.get_string("error")).c_str());
+        return 1;
+    }
+
+    return 0;
+} //End confCalPulse()
