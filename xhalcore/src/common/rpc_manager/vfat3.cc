@@ -64,7 +64,7 @@ DLLEXPORT uint32_t configureVFAT3DacMonitorMultiLink(uint32_t ohMask, uint32_t *
     return 0;
 } //End configureVFAT3DacMonitor(...)
 
-DLLEXPORT uint32_t getChannelRegistersVFAT3(uint32_t ohN, uint32_t vfatMask, uint32_t *chanRegData){
+DLLEXPORT uint32_t getChannelRegistersVFAT3(uint32_t ohN, uint32_t vfatMask, uint32_t *chanRegData, uint32_t nvfats){
     req = wisc::RPCMsg("vfat3.getChannelRegistersVFAT3");
 
     req.set_word("ohN",ohN);
@@ -82,7 +82,7 @@ DLLEXPORT uint32_t getChannelRegistersVFAT3(uint32_t ohN, uint32_t vfatMask, uin
         return 1;
     }
 
-    const uint32_t size = 3072;
+    const uint32_t size = 128*nvfats; // nChannels depends on the GEM type
     if (rsp.get_key_exists("chanRegData")) {
         ASSERT(rsp.get_word_array_size("chanRegData") == size);
         rsp.get_word_array("chanRegData", chanRegData);
@@ -94,7 +94,7 @@ DLLEXPORT uint32_t getChannelRegistersVFAT3(uint32_t ohN, uint32_t vfatMask, uin
     return 0;
 }
 
-DLLEXPORT uint32_t getVFAT3ChipIDs(uint32_t * chipIDData, uint32_t ohN, uint32_t vfatMask, bool rawID)
+DLLEXPORT uint32_t getVFAT3ChipIDs(uint32_t * chipIDData, uint32_t ohN, uint32_t vfatMask, bool rawID, uint32_t nvfats)
 {
     req = wisc::RPCMsg("vfat3.getVFAT3ChipIDs");
 
@@ -115,7 +115,7 @@ DLLEXPORT uint32_t getVFAT3ChipIDs(uint32_t * chipIDData, uint32_t ohN, uint32_t
     }
 
     std::string regBase = "GEM_AMC.OH.OH" + std::to_string(ohN) + ".GEB.VFAT";
-    for(int vfat=0; vfat < 24; ++vfat)
+    for(int vfat=0; vfat < nvfats; ++vfat)
     {
         if((vfatMask >> vfat) & 0x1){
             continue;
@@ -126,7 +126,7 @@ DLLEXPORT uint32_t getVFAT3ChipIDs(uint32_t * chipIDData, uint32_t ohN, uint32_t
     return 0;
 } //End getVFAT3ChipIDs()
 
-DLLEXPORT uint32_t readVFAT3ADC(uint32_t ohN, uint32_t *adcData, bool useExtRefADC, uint32_t vfatMask){
+DLLEXPORT uint32_t readVFAT3ADC(uint32_t ohN, uint32_t *adcData, bool useExtRefADC, uint32_t vfatMask, uint32_t nvfats){
     req = wisc::RPCMsg("vfat3.readVFAT3ADC");
 
     req.set_word("ohN",ohN);
@@ -144,7 +144,8 @@ DLLEXPORT uint32_t readVFAT3ADC(uint32_t ohN, uint32_t *adcData, bool useExtRefA
         return 1;
     }
 
-    const uint32_t size = 24;
+    const uint32_t size = nvfats;
+
     if (rsp.get_key_exists("adcData")) {
         ASSERT(rsp.get_word_array_size("adcData") == size);
         rsp.get_word_array("adcData", adcData);
@@ -156,7 +157,7 @@ DLLEXPORT uint32_t readVFAT3ADC(uint32_t ohN, uint32_t *adcData, bool useExtRefA
     return 0;
 } //End readVFAT3ADC(...)
 
-DLLEXPORT uint32_t readVFAT3ADCMultiLink(uint32_t ohMask, uint32_t *ohVfatMaskArray, uint32_t *adcDataAll, bool useExtRefADC){
+DLLEXPORT uint32_t readVFAT3ADCMultiLink(uint32_t ohMask, uint32_t *ohVfatMaskArray, uint32_t *adcDataAll, bool useExtRefADC, uint32_t nvfats){
     req = wisc::RPCMsg("vfat3.readVFAT3ADCMultiLink");
 
     req.set_word("ohMask",ohMask);
@@ -174,7 +175,7 @@ DLLEXPORT uint32_t readVFAT3ADCMultiLink(uint32_t ohMask, uint32_t *ohVfatMaskAr
         return 1;
     }
 
-    const uint32_t size = 12*24;
+    const uint32_t size = 12*nvfats;
     if (rsp.get_key_exists("adcDataAll")) {
         ASSERT(rsp.get_word_array_size("adcDataAll") == size);
         rsp.get_word_array("adcDataAll", adcDataAll);
@@ -186,18 +187,19 @@ DLLEXPORT uint32_t readVFAT3ADCMultiLink(uint32_t ohMask, uint32_t *ohVfatMaskAr
     return 0;
 } //End readVFAT3ADCMultiLink(...)
 
-DLLEXPORT uint32_t setChannelRegistersVFAT3(uint32_t ohN, uint32_t vfatMask, uint32_t *calEnable, uint32_t *masks, uint32_t *trimARM, uint32_t *trimARMPol, uint32_t *trimZCC, uint32_t *trimZCCPol){
+DLLEXPORT uint32_t setChannelRegistersVFAT3(uint32_t ohN, uint32_t vfatMask, uint32_t *calEnable, uint32_t *masks, uint32_t *trimARM, uint32_t *trimARMPol, uint32_t *trimZCC, uint32_t *trimZCCPol, uint32_t nvfats){
     req = wisc::RPCMsg("vfat3.setChannelRegistersVFAT3");
 
     req.set_word("ohN",ohN);
     req.set_word("vfatMask",vfatMask);
 
-    req.set_word_array("calEnable",calEnable,3072);
-    req.set_word_array("masks",masks,3072);
-    req.set_word_array("trimARM",trimARM,3072);
-    req.set_word_array("trimARMPol",trimARMPol,3072);
-    req.set_word_array("trimZCC",trimZCC,3072);
-    req.set_word_array("trimZCCPol",trimZCCPol,3072);
+    req.set_word_array("calEnable",calEnable,128*nvfats);
+    req.set_word_array("masks",masks,128*nvfats);
+    req.set_word_array("trimARM",trimARM,128*nvfats);
+    req.set_word_array("trimARMPol",trimARMPol,128*nvfats);
+    req.set_word_array("trimZCC",trimZCC,128*nvfats);
+    req.set_word_array("trimZCCPol",trimZCCPol,128*nvfats);
+
 
     wisc::RPCSvc* rpc_loc = getRPCptr();
 
@@ -214,14 +216,14 @@ DLLEXPORT uint32_t setChannelRegistersVFAT3(uint32_t ohN, uint32_t vfatMask, uin
 }
 
 
-DLLEXPORT uint32_t setChannelRegistersVFAT3Simple(uint32_t ohN, uint32_t vfatMask, uint32_t *chanRegData){
+DLLEXPORT uint32_t setChannelRegistersVFAT3Simple(uint32_t ohN, uint32_t vfatMask, uint32_t *chanRegData, uint32_t nvfats){
     req = wisc::RPCMsg("vfat3.setChannelRegistersVFAT3");
 
     req.set_word("ohN",ohN);
     req.set_word("vfatMask",vfatMask);
     req.set_word("simple",true);
 
-    req.set_word_array("chanRegData",chanRegData,3072);
+    req.set_word_array("chanRegData",chanRegData,128*nvfats);
 
     wisc::RPCSvc* rpc_loc = getRPCptr();
 

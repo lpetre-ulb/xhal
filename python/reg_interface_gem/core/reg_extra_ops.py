@@ -52,7 +52,7 @@ rList.argtypes=[POINTER(c_uint32),POINTER(c_uint32)]
 
 scanGBTPhases = lib.scanGBTPhases
 scanGBTPhases.restype = c_uint
-scanGBTPhases.argtype = [POINTER(c_uint), c_uint, c_uint, c_uint, c_uint, c_uint]
+scanGBTPhases.argtype = [POINTER(c_uint), c_uint, c_uint, c_uint, c_uint, c_uint, c_uint, c_uint]
 
 update_atdb = lib.update_atdb
 update_atdb.argtypes = [c_char_p]

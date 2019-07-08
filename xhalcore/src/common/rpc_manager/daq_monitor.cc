@@ -187,7 +187,7 @@ DLLEXPORT uint32_t getmonDAQOHmain(uint32_t* result, uint32_t noh, uint32_t ohMa
     return 0;
 }
 
-DLLEXPORT uint32_t getmonGBTLink(struct OHLinkMonitor *ohLinkMon, uint32_t noh, uint32_t ohMask, bool doReset)
+DLLEXPORT uint32_t getmonGBTLink(struct OHLinkMonitor *ohLinkMon, uint32_t noh, uint32_t ohMask, bool doReset, uint32_t NGBT)
 {
     req = wisc::RPCMsg("daq_monitor.getmonGBTLink");
     req.set_word("NOH",noh);
@@ -211,7 +211,7 @@ DLLEXPORT uint32_t getmonGBTLink(struct OHLinkMonitor *ohLinkMon, uint32_t noh, 
 
                 std::string strOHN = "OH" + std::to_string(ohN) + ".";
 
-                for(int gbtN = 0; gbtN < 3; ++gbtN){
+                for(int gbtN = 0; gbtN < NGBT; ++gbtN){
                     std::string strGBTN = "GBT" + std::to_string(gbtN) + ".";
 
                     ohLinkMon[ohN].gbtRdy[gbtN] = rsp.get_word(strOHN + strGBTN + "READY");
@@ -458,9 +458,15 @@ DLLEXPORT uint32_t getmonVFATLink(struct VFATLinkMonitor *vfatLinkMon, uint32_t 
                 for(int vfatN = 0; vfatN < 24; ++vfatN){
                     std::string strVFATN = "VFAT" + std::to_string(vfatN) + ".";
 
-                    vfatLinkMon[ohN].daqCRCErrCnt[vfatN] = rsp.get_word(strOHN + strVFATN + "DAQ_CRC_ERROR_CNT");
-                    vfatLinkMon[ohN].daqEvtCnt[vfatN] = rsp.get_word(strOHN + strVFATN + "DAQ_EVENT_CNT");
-                    vfatLinkMon[ohN].syncErrCnt[vfatN] = rsp.get_word(strOHN + strVFATN + "SYNC_ERR_CNT");
+                    if (rsp.get_key_exists(strOHN + strVFATN + "DAQ_CRC_ERROR_CNT")) {
+                        vfatLinkMon[ohN].daqCRCErrCnt[vfatN] = rsp.get_word(strOHN + strVFATN + "DAQ_CRC_ERROR_CNT");
+                        vfatLinkMon[ohN].daqEvtCnt[vfatN] = rsp.get_word(strOHN + strVFATN + "DAQ_EVENT_CNT");
+                        vfatLinkMon[ohN].syncErrCnt[vfatN] = rsp.get_word(strOHN + strVFATN + "SYNC_ERR_CNT");
+                    } else {
+                        vfatLinkMon[ohN].daqCRCErrCnt[vfatN] = 0xdeaddead;
+                        vfatLinkMon[ohN].daqEvtCnt[vfatN] = 0xdeaddead;
+                        vfatLinkMon[ohN].syncErrCnt[vfatN] = 0xdeaddead;
+                    }
                 } //End Loop Over VFAT
             } //End Loop Over OH
         } //End Case: No Error

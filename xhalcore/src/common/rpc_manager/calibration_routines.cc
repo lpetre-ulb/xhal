@@ -94,7 +94,7 @@ DLLEXPORT uint32_t checkSbitRateWithCalPulse(uint32_t ohN, uint32_t vfatN, uint3
     return 0;
 } //End checkSbitRateWithCalPulse()
 
-DLLEXPORT uint32_t dacScan(uint32_t ohN, uint32_t dacSelect, uint32_t dacStep, uint32_t mask, bool useExtRefADC, uint32_t * results){
+DLLEXPORT uint32_t dacScan(uint32_t ohN, uint32_t dacSelect, uint32_t dacStep, uint32_t mask, bool useExtRefADC, uint32_t * results, uint32_t nvfats){
     req = wisc::RPCMsg("calibration_routines.dacScan");
 
     req.set_word("ohN", ohN);
@@ -116,7 +116,7 @@ DLLEXPORT uint32_t dacScan(uint32_t ohN, uint32_t dacSelect, uint32_t dacStep, u
     }
 
     vfat3DACSize dacSize;
-    const uint32_t size = (dacSize.max[dacSelect]+1)*24/dacStep;
+    const uint32_t size = (dacSize.max[dacSelect]+1)*nvfats/dacStep;
     if (rsp.get_key_exists("dacScanResults")) {
         ASSERT(rsp.get_word_array_size("dacScanResults") == size);
         rsp.get_word_array("dacScanResults", results);
@@ -128,7 +128,7 @@ DLLEXPORT uint32_t dacScan(uint32_t ohN, uint32_t dacSelect, uint32_t dacStep, u
     return 0;
 } //End dacScan()
 
-DLLEXPORT uint32_t dacScanMultiLink(uint32_t ohMask, uint32_t NOH, uint32_t dacSelect, uint32_t dacStep, bool useExtRefADC, uint32_t * results){
+DLLEXPORT uint32_t dacScanMultiLink(uint32_t ohMask, uint32_t NOH, uint32_t dacSelect, uint32_t dacStep, bool useExtRefADC, uint32_t * results, uint32_t nvfats){
     req = wisc::RPCMsg("calibration_routines.dacScanMultiLink");
 
     req.set_word("ohMask", ohMask);
@@ -150,7 +150,7 @@ DLLEXPORT uint32_t dacScanMultiLink(uint32_t ohMask, uint32_t NOH, uint32_t dacS
     }
 
     vfat3DACSize dacSize;
-    const uint32_t size = NOH * (dacSize.max[dacSelect]+1)*24/dacStep;
+    const uint32_t size = NOH * (dacSize.max[dacSelect]+1)*nvfats/dacStep;
     if (rsp.get_key_exists("dacScanResultsAll")) {
         ASSERT(rsp.get_word_array_size("dacScanResultsAll") == size);
         rsp.get_word_array("dacScanResultsAll", results);
@@ -165,7 +165,7 @@ DLLEXPORT uint32_t dacScanMultiLink(uint32_t ohMask, uint32_t NOH, uint32_t dacS
 /***
  * @brief run a generic scan routine for a specific channel
  */
-DLLEXPORT uint32_t genScan(uint32_t nevts, uint32_t ohN, uint32_t dacMin, uint32_t dacMax, uint32_t dacStep, uint32_t ch, bool useCalPulse, bool currentPulse, uint32_t calScaleFactor, uint32_t mask, char * scanReg, bool useUltra, bool useExtTrig, uint32_t * result)
+DLLEXPORT uint32_t genScan(uint32_t nevts, uint32_t ohN, uint32_t dacMin, uint32_t dacMax, uint32_t dacStep, uint32_t ch, bool useCalPulse, bool currentPulse, uint32_t calScaleFactor, uint32_t mask, char * scanReg, bool useUltra, bool useExtTrig, uint32_t * result, uint32_t nvfats)
 {
     req = wisc::RPCMsg("calibration_routines.genScan");
 
@@ -196,7 +196,7 @@ DLLEXPORT uint32_t genScan(uint32_t nevts, uint32_t ohN, uint32_t dacMin, uint32
         printf("Caught an error: %s\n", (rsp.get_string("error")).c_str());
         return 1;
     }
-    const uint32_t size = (dacMax - dacMin+1)*24/dacStep;
+    const uint32_t size = (dacMax - dacMin+1)*nvfats/dacStep;
     if (rsp.get_key_exists("data")) {
         ASSERT(rsp.get_word_array_size("data") == size);
         rsp.get_word_array("data", result);
@@ -211,7 +211,7 @@ DLLEXPORT uint32_t genScan(uint32_t nevts, uint32_t ohN, uint32_t dacMin, uint32
 /***
  * @brief run a generic scan routine on all channels
  */
-DLLEXPORT uint32_t genChannelScan(uint32_t nevts, uint32_t ohN, uint32_t mask, uint32_t dacMin, uint32_t dacMax, uint32_t dacStep, bool useCalPulse, bool currentPulse, uint32_t calScaleFactor, bool useExtTrig, char * scanReg, bool useUltra, uint32_t * result){
+DLLEXPORT uint32_t genChannelScan(uint32_t nevts, uint32_t ohN, uint32_t mask, uint32_t dacMin, uint32_t dacMax, uint32_t dacStep, bool useCalPulse, bool currentPulse, uint32_t calScaleFactor, bool useExtTrig, char * scanReg, bool useUltra, uint32_t * result, uint32_t nvfats){
     req = wisc::RPCMsg("calibration_routines.genChannelScan");
 
     req.set_word("nevts", nevts);
@@ -240,7 +240,7 @@ DLLEXPORT uint32_t genChannelScan(uint32_t nevts, uint32_t ohN, uint32_t mask, u
         printf("Caught an error: %s\n", (rsp.get_string("error")).c_str());
         return 1;
     }
-    const uint32_t size = 24*128*(dacMax-dacMin+1)/dacStep;
+    const uint32_t size = nvfats*128*(dacMax-dacMin+1)/dacStep;
     if (rsp.get_key_exists("data")) {
         ASSERT(rsp.get_word_array_size("data") == size);
         rsp.get_word_array("data", result);
@@ -252,7 +252,7 @@ DLLEXPORT uint32_t genChannelScan(uint32_t nevts, uint32_t ohN, uint32_t mask, u
     return 0;
 } //End genChannelScan()
 
-DLLEXPORT uint32_t sbitRateScan(uint32_t ohMask, uint32_t dacMin, uint32_t dacMax, uint32_t dacStep, uint32_t ch, char * scanReg, uint32_t * resultDacVal, uint32_t * resultTrigRate, uint32_t * resultTrigRatePerVFAT)
+DLLEXPORT uint32_t sbitRateScan(uint32_t ohMask, uint32_t dacMin, uint32_t dacMax, uint32_t dacStep, uint32_t ch, char * scanReg, uint32_t * resultDacVal, uint32_t * resultTrigRate, uint32_t * resultTrigRatePerVFAT, uint32_t nvfats)
 {
     req = wisc::RPCMsg("calibration_routines.sbitRateScan");
 
@@ -299,7 +299,7 @@ DLLEXPORT uint32_t sbitRateScan(uint32_t ohMask, uint32_t dacMin, uint32_t dacMa
     }
 
     if (rsp.get_key_exists("outDataVFATRate")) {
-        ASSERT(rsp.get_word_array_size("outDataVFATRate") == (size*24));
+        ASSERT(rsp.get_word_array_size("outDataVFATRate") == (size*nvfats));
         rsp.get_word_array("outDataVFATRate", resultTrigRatePerVFAT);
     }
     else{
