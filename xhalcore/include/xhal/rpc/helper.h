@@ -13,6 +13,7 @@
 #define XHAL_RPC_HELPER_H
 
 #include <tuple>
+#include <type_traits>
 
 namespace xhal { namespace rpc { namespace helper {
 
@@ -93,6 +94,12 @@ namespace xhal { namespace rpc { namespace helper {
     constexpr inline auto get_forward_as_tuple() {
         return functor_traits<decltype(&Obj::operator())>::forward_as_tuple();
     }
+
+    /*!
+     * \brief Checks whether the template parameter \c T is a \c bool
+     */
+    template <typename T>
+        using is_bool = std::is_same<typename std::decay<T>::type, bool>;
 
     /*!
      * \brief Checks whether the template parameter \c T is a \c std::tuple

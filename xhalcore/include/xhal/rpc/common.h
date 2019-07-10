@@ -9,7 +9,9 @@
 #define XHAL_RPC_COMMON_H
 
 #include "xhal/rpc/compat.h"
+#include "xhal/rpc/helper.h"
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -111,6 +113,17 @@ namespace xhal { namespace rpc {
          */
         inline void save(const std::vector<std::string> &value) {
             m_wiscMsg->set_string_array(std::to_string(dispenseKey()), value);
+        }
+
+        /*!
+         * \brief Adds a \c std::array<T> to the message where \c T is an integral type (except \c bool)
+         */
+        template<typename T,
+                 std::size_t N,
+                 typename std::enable_if<std::is_integral<T>::value && !helper::is_bool<T>::value, int>::type = 0
+                >
+        inline void save(const std::array<T, N> &value) {
+            m_wiscMsg->set_binarydata(std::to_string(dispenseKey()), value.data(), N*sizeof(T));
         }
 
         /*!
@@ -231,12 +244,23 @@ namespace xhal { namespace rpc {
         /*!
          * \brief Retrieves a \c std::vector<std::string> from the message
          */
-        inline void load(std::vector<std::string> & value) {
+        inline void load(std::vector<std::string> &value) {
             value = m_wiscMsg->get_string_array(std::to_string(dispenseKey()));
         }
 
         /*!
-         * \brief Retrieve a \c T parameter from the message and stores it inside
+         * \brief Retrieves a \c std::array<T> from the message where \c T is an integral type (except \c bool)
+         */
+        template<typename T,
+                 std::size_t N,
+                 typename std::enable_if<std::is_integral<T>::value && !helper::is_bool<T>::value, int>::type = 0
+                >
+        inline void load(std::array<T, N> &value) {
+            m_wiscMsg->get_binarydata(std::to_string(dispenseKey()), value.data(), N*sizeof(T));
+        }
+
+        /*!
+         * \brief Retrieves a \c T parameter from the message and stores it inside
          * a \c void_holder.
          *
          * It should be used when setting the result from a function.
