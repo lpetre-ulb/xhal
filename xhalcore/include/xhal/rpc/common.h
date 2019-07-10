@@ -148,6 +148,25 @@ namespace xhal { namespace rpc {
         }
 
         /*!
+         * \brief Adds a \c std::map<std::string, T> to the message where \c T is a serializable type
+         */
+        template<typename T> inline void save(const std::map<std::string, T> &value) {
+            // The first RPC key stores the std::map keys
+            // This is required to know the std::map size at deserialization
+            const auto keysKey = dispenseKey();
+
+            std::vector<std::string> keys{};
+            keys.reserve(value.size());
+
+            for (const auto & elem : value) {
+                keys.push_back(elem.first);
+                this->save(elem.second);
+            }
+
+            m_wiscMsg->set_string_array(std::to_string(keysKey), keys);
+        }
+
+        /*!
          * \brief Adds the content of a \c void_holder to the message
          *
          * It should be used when setting the result from a function call.
@@ -285,6 +304,19 @@ namespace xhal { namespace rpc {
          */
         template<typename T> inline void load(std::map<std::uint32_t, T> &value) {
             const auto keys = m_wiscMsg->get_word_array(std::to_string(dispenseKey()));
+
+            for (const auto & key: keys) {
+                T val;
+                this->load(val);
+                value.emplace(key, std::move(val));
+            }
+        }
+
+        /*!
+         * \brief Retrieves a \c std::map<std::string, T> from the message where \c T is a serializable type
+         */
+        template<typename T> inline void load(std::map<std::string, T> &value) {
+            const auto keys = m_wiscMsg->get_string_array(std::to_string(dispenseKey()));
 
             for (const auto & key: keys) {
                 T val;
