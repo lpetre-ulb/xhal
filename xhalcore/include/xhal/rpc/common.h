@@ -13,7 +13,9 @@
 
 #include <array>
 #include <cstdint>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "xhal/rpc/wiscRPCMsg.h" // move the header to "xhal/extern/wiscRPCMsg.h" ?
@@ -124,6 +126,25 @@ namespace xhal { namespace rpc {
                 >
         inline void save(const std::array<T, N> &value) {
             m_wiscMsg->set_binarydata(std::to_string(dispenseKey()), value.data(), N*sizeof(T));
+        }
+
+        /*!
+         * \brief Adds a \c std::map<std::uint32_t, T> to the message where \c T is a serializable type
+         */
+        template<typename T> inline void save(const std::map<std::uint32_t, T> &value) {
+            // The first RPC key stores the std::map keys
+            // This is required to know the std::map size at deserialization
+            const auto keysKey = dispenseKey();
+
+            std::vector<std::uint32_t> keys{};
+            keys.reserve(value.size());
+
+            for (const auto & elem : value) {
+                keys.push_back(elem.first);
+                this->save(elem.second);
+            }
+
+            m_wiscMsg->set_word_array(std::to_string(keysKey), keys);
         }
 
         /*!
@@ -257,6 +278,19 @@ namespace xhal { namespace rpc {
                 >
         inline void load(std::array<T, N> &value) {
             m_wiscMsg->get_binarydata(std::to_string(dispenseKey()), value.data(), N*sizeof(T));
+        }
+
+        /*!
+         * \brief Retrieves a \c std::map<std::uint32_t, T> from the message where \c T is a serializable type
+         */
+        template<typename T> inline void load(std::map<std::uint32_t, T> &value) {
+            const auto keys = m_wiscMsg->get_word_array(std::to_string(dispenseKey()));
+
+            for (const auto & key: keys) {
+                T val;
+                this->load(val);
+                value.emplace(key, std::move(val));
+            }
         }
 
         /*!
