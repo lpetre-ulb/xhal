@@ -79,15 +79,22 @@ namespace xhal { namespace rpc {
 
         wisc::RPCMsg *m_wiscMsg;
 
-        /*
-         * \brief Supresses implicit type conversions
+        /*!
+         * \brief Serializes custom types if possible or else supresses implicit type conversions
          *
-         * Every type not defined hereunder is delete by this templated function.
-         * It aims at enforcing maximum type compatibility with the UW RPC API by
-         * remembering the developer that she/he can transmit defined types over the
-         * network.
+         * Every type not defined hereunder is taken care of by this templated function.
+         * The function serves two purposes:
+         *
+         * 1. It delegates the serialization to a well-known function.
+         * 2. It aims at enforcing maximum type compatibility with the UW RPC API by
+         *    remembering the developer that she/he can transmit defined types over the
+         *    network.
          */
-        template<typename T> void save(T) = delete;
+        template<typename T> inline void save(const T &t) {
+            // This const_cast is safe when the API is used as intented
+            // More precisely when the object t is modified only with the operator&
+            serialize(*this, const_cast<T &>(t));
+        }
 
         /*!
          * \brief Adds a \c std::uint32_t to the message
@@ -217,7 +224,7 @@ namespace xhal { namespace rpc {
          * \brief Allows to serialize data into the message with a natural interface
          */
         template<typename T>
-        MessageSerializer & operator<<(const T &t) {
+        inline MessageSerializer & operator<<(const T &t) {
             this->save(t);
             return *this;
         }
@@ -230,7 +237,7 @@ namespace xhal { namespace rpc {
          * function.
          */
         template<typename T>
-        MessageSerializer & operator&(const T &t) {
+        inline MessageSerializer & operator&(const T &t) {
             this->save(t);
             return *this;
         }
@@ -250,15 +257,20 @@ namespace xhal { namespace rpc {
 
         const wisc::RPCMsg *m_wiscMsg;
 
-        /*
-         * \brief Supresses implicit type conversion
+        /*!
+         * \brief Deserializes custom types if possible or else supresses implicit type conversion
          *
-         * Every type not defined hereunder is delete by this templated function.
-         * It aims at enforcing maximum type compatibility with the UW RPC API by
-         * remembering the developer that she/he can transmit defined types over the
-         * network.
+         * Every type not defined hereunder is taken care of by this templated function.
+         * The function serves two purposes:
+         *
+         * 1. It delegates the deserialization to a well-known function.
+         * 2. It aims at enforcing maximum type compatibility with the UW RPC API by
+         *    remembering the developer that she/he can transmit defined types over the
+         *    network.
          */
-        template<typename T> void load(T) = delete;
+        template<typename T> inline void load(T &t) {
+            serialize(*this, t);
+        }
 
         /*!
          * \brief Retrieves a \c std::uint32_t from the message
@@ -363,7 +375,7 @@ namespace xhal { namespace rpc {
                  typename... Args,
                  typename std::enable_if<I == sizeof...(Args), int>::type = 0
                 >
-        inline void load(const std::tuple<Args...> &) { }
+        inline void load(std::tuple<Args...> &) { }
 
     public:
 
@@ -378,7 +390,7 @@ namespace xhal { namespace rpc {
          * \brief Allows to deserialiaze data from the message with a natural interface
          */
         template <typename T>
-        MessageDeserializer & operator>>(T &t) {
+        inline MessageDeserializer & operator>>(T &t) {
             this->load(t);
             return *this;
         }
@@ -391,12 +403,65 @@ namespace xhal { namespace rpc {
          * function.
          */
         template <typename T>
-        MessageDeserializer & operator&(T &t) {
-            load(t);
+        inline MessageDeserializer & operator&(T &t) {
+            this->load(t);
             return *this;
         }
 
     };
+
+    /*!
+     * \brief Provides a default (de)serialiazer in case the intrusive method is used
+     */
+    template<typename Message, typename T>
+    inline void serialize(Message &msg, T &t) {
+        t.serialize(msg);
+    }
+
+    /*!
+     * \brief Serializer for \c std::array<T, N> where \c is a serializable type
+     *
+     * This a simple example of custom type serialization.
+     *
+     * The library provides two custom type serialization methods:
+     *
+     * 1. The intrusive method
+     * 2. The non-intrusive method
+     *
+     * Let's take an example :
+     *
+     * \code{.cpp}
+     * struct Point
+     * {
+     *     std::uint32_t x, y;
+     *
+     *     // The intrusive version is implemented as a new member function
+     *     // which takes a message as parameter (i.e. the serializer or deserializer)
+     *     template<class Message> inline void serialize(Message & msg) {
+     *         msg & x & y;
+     *     }
+     * };
+     *
+     * // The non-intrusive version allows to serialize objects defined in a library
+     * // Simply define the serialize function in the xhal::rpc namespace with two parameters
+     * // (1) A message (i.e. the serializer or deserializer) and (2) the custom type
+     * namespace xhal { namspace rpc {
+     *     template<typename Message> inline void serialize(Message &msg, Point &point) {
+     *         msq & point.x & point.y;
+     *     }
+     * } }
+     * \endcode
+     *
+     * \warning In order to work as intended the \c serialize functions \b MUST modify
+     * the object only with the \c operator&
+     *
+     */
+    template<typename Message, typename T, std::size_t N>
+    inline void serialize(Message &msg, std::array<T, N> &value) {
+        for (auto & elem: value) {
+            msg & elem;
+        }
+    }
 
 } }
 
