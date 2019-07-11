@@ -46,5 +46,6 @@ DLLEXPORT uint32_t getList(uint32_t* addresses, uint32_t* result, ssize_t size);
 DLLEXPORT uint32_t getBlock(uint32_t address, uint32_t* result, ssize_t size);
 DLLEXPORT uint32_t update_atdb(char * xmlfilename);
 DLLEXPORT uint32_t getRegInfoDB(char * regName);
+uint32_t count_1bits(uint32_t x); //https://stackoverflow.com/questions/4244274/how-do-i-count-the-number-of-zero-bits-in-an-integer
 
 #endif
