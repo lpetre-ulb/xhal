@@ -4,6 +4,7 @@
  * a remotely callable RPC method
  *
  * \author Laurent Pétré <lpetre@ulb.ac.be>
+ * \author Louis Moureaux <lmoureau@ulb.ac.be>
  */
 
 #ifndef XHAL_RPC_REGSTER_H
@@ -11,6 +12,7 @@
 
 #include "xhal/rpc/common.h"
 #include "xhal/rpc/compat.h"
+#include "xhal/rpc/exceptions.h"
 #include "xhal/rpc/helper.h"
 
 #include "moduleapi.h" // Only present in the CTP7 modules
@@ -18,6 +20,35 @@
 #include <typeinfo>
 
 namespace xhal { namespace rpc {
+
+    namespace helper {
+
+        /**
+         * \brief Handles an exception, setting the error key on the response.
+         *
+         * In case a second exception occurs when setting the error key, \c std::terminate is called.
+         */
+        template<typename Exception>
+        void handleException(const Exception &e, wisc::RPCMsg *response) noexcept
+        {
+            // Log exception here?
+            response->set_string(std::string(abiVersion) + ".error", getExceptionMessage(e));
+            setExceptionType(response);
+        }
+
+        /*
+         * Handles an unknown exception, setting the error key on the response.
+         *
+         * In case an exception occurs when setting the error key, \c std::terminate is called.
+         */
+        void handleException(wisc::RPCMsg *response) noexcept
+        {
+            // Log exception here?
+            response->set_string(std::string(abiVersion) + ".error", "unknown exception type");
+            setExceptionType(response);
+        }
+
+    } // namespace helper
 
     /*!
      * \brief Locally invoke a RPC method
@@ -31,20 +62,34 @@ namespace xhal { namespace rpc {
             >
     void invoke(const wisc::RPCMsg *request, wisc::RPCMsg *response) noexcept
     {
-        // Remove the cv-qualifiers and references since we need
-        // a copy of the object
-        helper::functor_decay_args_t<Method> args;
+        try {
+            // Remove the cv-qualifiers and references since we need
+            // a copy of the object
+            helper::functor_decay_args_t<Method> args;
 
-        MessageDeserializer query(request);
-        query >> args;
+            MessageDeserializer query(request);
+            query >> args;
 
-        // Call the Method functor with the arguments received from
-        // the RPC message
-        auto result = compat::tuple_apply<helper::functor_return_t<Method>>(Method{}, args);
+            // Call the Method functor with the arguments received from
+            // the RPC message
+            auto result = compat::tuple_apply<helper::functor_return_t<Method>>(Method{}, args);
 
-        // Serialize the reply
-        MessageSerializer reply(response);
-        reply << result;
+            // Serialize the reply
+            MessageSerializer reply(response);
+            reply << result;
+        } catch (const std::exception &e) {
+            helper::handleException(e, response);
+        } catch (const wisc::RPCMsg::BadKeyException &e) {
+            helper::handleException(e, response);
+        } catch (const wisc::RPCMsg::TypeException &e) {
+            helper::handleException(e, response);
+        } catch (const wisc::RPCMsg::BufferTooSmallException &e) {
+            helper::handleException(e, response);
+        } catch (const wisc::RPCMsg::CorruptMessageException &e) {
+            helper::handleException(e, response);
+        } catch (...) {
+            helper::handleException(response);
+        }
     }
 
     /*!

@@ -1,0 +1,52 @@
+#include "xhal/rpc/exceptions.h"
+
+#include "xhal/rpc/common.h" // abiVersion
+
+#include "cxxabi.h" // C++ Itanium ABI
+
+namespace xhal { namespace rpc { namespace helper {
+
+    std::string getExceptionMessage(const std::exception &e)
+    {
+        return e.what();
+    }
+
+    std::string getExceptionMessage(const wisc::RPCMsg::BadKeyException &e)
+    {
+        return "bad RPC key: " + e.key;
+    }
+
+    std::string getExceptionMessage(const wisc::RPCMsg::TypeException &e)
+    {
+        return "RPC type error";
+    }
+
+    std::string getExceptionMessage(const wisc::RPCMsg::BufferTooSmallException &e)
+    {
+        return "buffer too small";
+    }
+
+    std::string getExceptionMessage(const wisc::RPCMsg::CorruptMessageException &e)
+    {
+        return "corrupt RPC message: " + e.reason;
+    }
+
+    void setExceptionType(wisc::RPCMsg *response)
+    {
+        // Fetch the type of the current exception
+        const std::type_info *exceptionType = abi::__cxa_current_exception_type();
+        if (exceptionType != nullptr) {
+            // Try to demangle it
+            char *demangled = abi::__cxa_demangle(exceptionType->name(),
+                                                  nullptr, nullptr, nullptr);
+            if (demangled != nullptr) {
+                response->set_string(std::string(abiVersion) + ".type", demangled);
+                std::free(demangled);
+            } else {
+                // Could not demangle, use raw name
+                response->set_string(std::string(abiVersion) + ".type", exceptionType->name());
+            }
+        }
+    }
+
+}}} // namespace xhal::rpc::helper
