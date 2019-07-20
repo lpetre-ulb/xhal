@@ -57,6 +57,13 @@ namespace xhal { namespace rpc { namespace helper {
      */
     void setExceptionType(wisc::RPCMsg *response);
 
+    /**
+     * \brief Fetches an error message from \c response.
+     *
+     * The \c error key must be set and to a string.
+     */
+    std::string readExceptionMessage(const wisc::RPCMsg &response);
+
 }}} // namespace xhal::rpc::helper
 
 #endif // XHAL_RPC_EXCEPTIONS_H

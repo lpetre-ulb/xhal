@@ -4,6 +4,7 @@
  * remotely a RPC method
  *
  * \author Laurent Pétré <lpetre@ulb.ac.be>
+ * \author Louis Moureaux <lmoureau@ulb.ac.be>
  */
 
 #ifndef XHAL_RPC_CALL_H
@@ -11,6 +12,7 @@
 
 #include "xhal/rpc/common.h"
 #include "xhal/rpc/compat.h"
+#include "xhal/rpc/exceptions.h"
 #include "xhal/rpc/helper.h"
 
 #include "xhal/rpc/wiscrpcsvc.h" // move the header to xhal/extern/wiscrpcsvc.h ?
@@ -30,6 +32,53 @@ namespace xhal { namespace rpc {
              typename... Args,
              typename std::enable_if<std::is_base_of<xhal::rpc::Method, Method>::value, int>::type = 0
             >
+    helper::functor_return_t<Method> call(wisc::RPCSvc &connection, Args&&... args);
+
+    /**
+     * \brief Thrown by \ref call when an exception is thrown on the remote host.
+     */
+    class RemoteException : public std::runtime_error
+    {
+        std::string m_type;
+
+        /**
+         * \brief \ref call is the only function that can throw this exception.
+         */
+        template<typename Method,
+                 typename... Args,
+                 typename std::enable_if<std::is_base_of<xhal::rpc::Method, Method>::value, int>::type
+                >
+        friend helper::functor_return_t<Method> call(wisc::RPCSvc &connection,
+                                                     Args&&... args);
+
+        /**
+         * \brief Constructor.
+         * \param response An RPC response to extract error information from.
+         */
+        explicit RemoteException(const wisc::RPCMsg &response) :
+            std::runtime_error(helper::readExceptionMessage(response)),
+            m_type(response.get_key_exists(std::string(abiVersion) + ".type") ?
+                   response.get_string(std::string(abiVersion) + ".type") : "")
+        {
+        }
+
+    public:
+        /**
+         * \brief Returns \c true if the type of the exception is available.
+         */
+        bool hasType() const { return !m_type.empty(); }
+
+        /**
+         * \brief Returns the exception type name if available, an empty string otherwise.
+         */
+        std::string type() const { return m_type; }
+    };
+
+    /* Implementation */
+    template<typename Method,
+             typename... Args,
+             typename std::enable_if<std::is_base_of<xhal::rpc::Method, Method>::value, int>::type
+            >
     helper::functor_return_t<Method> call(wisc::RPCSvc &connection, Args&&... args)
     {
         // The wisc::RPCMsg method name is taken from the typeid
@@ -45,6 +94,10 @@ namespace xhal { namespace rpc {
 
         // Remote call
         const wisc::RPCMsg response = connection.call_method(request);
+
+        if (response.get_key_exists(std::string(abiVersion) + ".error")) {
+            throw RemoteException(response);
+        }
 
         // The RPC method can return a void so the void_holder is required
         compat::void_holder<helper::functor_return_t<Method>> return_v;

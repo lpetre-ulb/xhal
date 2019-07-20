@@ -49,4 +49,14 @@ namespace xhal { namespace rpc { namespace helper {
         }
     }
 
+    std::string readExceptionMessage(const wisc::RPCMsg &response)
+    {
+        std::string msg = "remote error: ";
+        if (response.get_key_exists(std::string(abiVersion) + ".type")) {
+            msg += response.get_string(std::string(abiVersion) + ".type") + ": ";
+        }
+        msg += response.get_string(std::string(abiVersion) + ".error");
+        return msg;
+    }
+
 }}} // namespace xhal::rpc::helper
