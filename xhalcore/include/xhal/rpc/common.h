@@ -443,8 +443,9 @@ namespace xhal { namespace rpc {
      * };
      *
      * // The non-intrusive version allows to serialize objects defined in a library
-     * // Simply define the serialize function in the xhal::rpc namespace with two parameters
-     * // (1) A message (i.e. the serializer or deserializer) and (2) the custom type
+     * // Simply define the serialize function in the xhal::rpc namespace or the namespace
+     * // where the type is defined with two parameters (1) A message (i.e. the serializer
+     * // or deserializer) and (2) the custom type
      * namespace xhal { namspace rpc {
      *     template<typename Message> inline void serialize(Message &msg, Point &point) {
      *         msq & point.x & point.y;
@@ -454,10 +455,11 @@ namespace xhal { namespace rpc {
      *
      * \warning In order to work as intended the \c serialize functions \b MUST modify
      * the object only with the \c operator&
-     *
      */
     template<typename Message, typename T, std::size_t N>
     inline void serialize(Message &msg, std::array<T, N> &value) {
+        // The std::array size is known at compile time (and part of
+        // the signature), so we don't need to serialize it
         for (auto & elem: value) {
             msg & elem;
         }
