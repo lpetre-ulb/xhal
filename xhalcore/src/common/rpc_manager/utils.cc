@@ -171,3 +171,12 @@ DLLEXPORT uint32_t putReg(uint32_t address, uint32_t value)
         return 0xdeaddead;
     } else return value;
 }
+
+uint32_t count_1bits(uint32_t x)
+{
+    x = x - ((x >> 1) & 0x55555555);
+    x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
+    x = x + (x >> 8);
+    x = x + (x >> 16);
+    return x & 0x0000003F;
+}
