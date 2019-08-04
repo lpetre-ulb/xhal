@@ -1,5 +1,7 @@
 #include "xhal/XHALInterface.h"
 
+#include <log4cplus/version.h>
+
 int xhal::XHALInterface::index = 0;
 
 xhal::XHALInterface::XHALInterface(const std::string& board_domain_name):
@@ -7,8 +9,11 @@ xhal::XHALInterface::XHALInterface(const std::string& board_domain_name):
   isConnected(false)
 {
   log4cplus::SharedAppenderPtr myAppender(new log4cplus::ConsoleAppender());
-  std::auto_ptr<log4cplus::Layout> myLayout = std::auto_ptr<log4cplus::Layout>(new log4cplus::TTCCLayout());
-  myAppender->setLayout( myLayout );
+#if LOG4CPLUS_VERSION < LOG4CPLUS_MAKE_VERSION(2, 0, 0)
+  myAppender->setLayout(std::auto_ptr<log4cplus::Layout>(new log4cplus::TTCCLayout()));
+#else
+  myAppender->setLayout(std::unique_ptr<log4cplus::Layout>(new log4cplus::TTCCLayout()));
+#endif
   // Following strange construction is required because it looks like log4cplus was compiled withot c++11 support...
   auto t_logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("XHALInterface_"+m_board_domain_name + "_" + std::to_string(index)));
   ++index;
