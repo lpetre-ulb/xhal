@@ -31,6 +31,11 @@ namespace xhal { namespace rpc { namespace helper {
         return "corrupt RPC message: " + e.reason;
     }
 
+    std::string getExceptionMessage(const wisc::RPCSvc::RPCException &e)
+    {
+        return e.message;
+    }
+
     void setExceptionType(wisc::RPCMsg *response)
     {
         // Fetch the type of the current exception

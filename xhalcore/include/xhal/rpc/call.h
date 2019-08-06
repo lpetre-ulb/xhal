@@ -74,6 +74,35 @@ namespace xhal { namespace rpc {
         std::string type() const { return m_type; }
     };
 
+    /**
+     * \brief Thrown by \c call when there is a problem calling the remote method.
+     *
+     * This can be either because the Wisconsin messaging layer throws an exception or because
+     * the method can't be found.
+     */
+    class MessageException : public std::runtime_error
+    {
+        /**
+         * \brief \ref call is the only function that can throw this exception.
+         */
+        template<typename Method,
+                 typename... Args,
+                 typename std::enable_if<std::is_base_of<xhal::rpc::Method, Method>::value, int>::type
+                >
+        friend helper::functor_return_t<Method> call(wisc::RPCSvc &connection,
+                                                     Args&&... args);
+
+        /**
+         * \brief Constructor.
+         */
+        explicit MessageException(const std::string &message) :
+            std::runtime_error(message)
+        {}
+
+    public:
+        // Use what()
+    };
+
     /* Implementation */
     template<typename Method,
              typename... Args,
@@ -81,31 +110,47 @@ namespace xhal { namespace rpc {
             >
     helper::functor_return_t<Method> call(wisc::RPCSvc &connection, Args&&... args)
     {
-        // The wisc::RPCMsg method name is taken from the typeid
-        // This is implementation dependent but g++ and clang++
-        // follow the same convention
-        wisc::RPCMsg request(std::string(abiVersion) + "." + typeid(Method).name());
-        MessageSerializer query{&request};
+        try {
+            // The wisc::RPCMsg method name is taken from the typeid
+            // This is implementation dependent but g++ and clang++
+            // follow the same convention
+            wisc::RPCMsg request(std::string(abiVersion) + "." + typeid(Method).name());
+            MessageSerializer query{&request};
 
-        // Type conversion from args to serializable types
-        // must be performed in the same statement in order to
-        // make use of lifetime extension
-        query << helper::get_forward_as_tuple<Method>()(args...);
+            // Type conversion from args to serializable types
+            // must be performed in the same statement in order to
+            // make use of lifetime extension
+            query << helper::get_forward_as_tuple<Method>()(args...);
 
-        // Remote call
-        const wisc::RPCMsg response = connection.call_method(request);
+            // Remote call
+            const wisc::RPCMsg response = connection.call_method(request);
 
-        if (response.get_key_exists(std::string(abiVersion) + ".error")) {
-            throw RemoteException(response);
+            // Check for errors
+            if (response.get_key_exists("rpcerror")) {
+                throw MessageException(response.get_string("rpcerror"));
+            } else if (response.get_key_exists(std::string(abiVersion) + ".error")) {
+                throw RemoteException(response);
+            }
+
+            // The RPC method can return a void so the void_holder is required
+            compat::void_holder<helper::functor_return_t<Method>> return_v;
+
+            MessageDeserializer reply{&response};
+            reply >> return_v;
+
+            return return_v.get();
+
+        } catch (const wisc::RPCMsg::BadKeyException &e) {
+            throw MessageException(helper::getExceptionMessage(e));
+        } catch (const wisc::RPCMsg::TypeException &e) {
+            throw MessageException(helper::getExceptionMessage(e));
+        } catch (const wisc::RPCMsg::BufferTooSmallException &e) {
+            throw MessageException(helper::getExceptionMessage(e));
+        } catch (const wisc::RPCMsg::CorruptMessageException &e) {
+            throw MessageException(helper::getExceptionMessage(e));
+        } catch (const wisc::RPCSvc::RPCException &e) {
+            throw MessageException(helper::getExceptionMessage(e));
         }
-
-        // The RPC method can return a void so the void_holder is required
-        compat::void_holder<helper::functor_return_t<Method>> return_v;
-
-        MessageDeserializer reply{&response};
-        reply >> return_v;
-
-        return return_v.get();
     }
 
 }}

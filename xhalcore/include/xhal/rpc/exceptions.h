@@ -8,7 +8,7 @@
 #ifndef XHAL_RPC_EXCEPTIONS_H
 #define XHAL_RPC_EXCEPTIONS_H
 
-#include "xhal/rpc/wiscRPCMsg.h"
+#include "xhal/rpc/wiscrpcsvc.h"
 
 namespace xhal { namespace rpc { namespace helper {
 
@@ -49,6 +49,13 @@ namespace xhal { namespace rpc { namespace helper {
      * Specialization for \c wisc::RPCMsg::CorruptMessageException.
      */
     std::string getExceptionMessage(const wisc::RPCMsg::CorruptMessageException &e);
+
+    /**
+     * \brief Retrieves a user-friendly message for the given exception.
+     *
+     * Specialization for \c wisc::RPCSvc::RPCException and derived types.
+     */
+    std::string getExceptionMessage(const wisc::RPCSvc::RPCException &e);
 
     /**
      * \brief Sets the type of the current exception in \c response.
