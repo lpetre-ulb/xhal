@@ -3,28 +3,42 @@ SUBPACKAGES := \
         xhalcore \
         xhalarm
 
-SUBPACKAGES.DEBUG    := $(patsubst %,%.debug,    $(SUBPACKAGES))
-SUBPACKAGES.RPM      := $(patsubst %,%.rpm,      $(SUBPACKAGES))
-SUBPACKAGES.DOC      := $(patsubst %,%.doc,      $(SUBPACKAGES))
-SUBPACKAGES.CLEANRPM := $(patsubst %,%.cleanrpm, $(SUBPACKAGES))
-SUBPACKAGES.CLEANDOC := $(patsubst %,%.cleandoc, $(SUBPACKAGES))
 SUBPACKAGES.CLEAN    := $(patsubst %,%.clean,    $(SUBPACKAGES))
+SUBPACKAGES.DEBUG    := $(patsubst %,%.debug,    $(SUBPACKAGES))
+SUBPACKAGES.INSTALL  := $(patsubst %,%.install,  $(SUBPACKAGES))
+SUBPACKAGES.UNINSTALL:= $(patsubst %,%.uninstall,$(SUBPACKAGES))
+SUBPACKAGES.RPM      := $(patsubst %,%.rpm,      $(SUBPACKAGES))
+SUBPACKAGES.CLEANRPM := $(patsubst %,%.cleanrpm, $(SUBPACKAGES))
+SUBPACKAGES.DOC      := $(patsubst %,%.doc,      $(SUBPACKAGES))
+SUBPACKAGES.CLEANDOC := $(patsubst %,%.cleandoc, $(SUBPACKAGES))
 
-.PHONY: build clean cleanall cleandoc cleanrpm
+.PHONY: $(SUBPACKAGES) \
+	$(SUBPACKAGES.CLEAN) \
+	$(SUBPACKAGES.INSTALL) \
+	$(SUBPACKAGES.UNINSTALL) \
+	$(SUBPACKAGES.RPM) \
+	$(SUBPACKAGES.CLEANRPM) \
+	$(SUBPACKAGES.DOC) \
+	$(SUBPACKAGES.CLEANDOC)
 
+.PHONY: all build clean cleanall cleandoc cleanrpm
 build: $(SUBPACKAGES)
 
-all: $(SUBPACKAGES) $(SUBPACKAGES.RPM) $(SUBPACKAGES.DOC)
+all: $(SUBPACKAGES) $(SUBPACKAGES.DOC)
+
+doc: $(SUBPACKAGES.DOC)
 
 rpm: $(SUBPACKAGES) $(SUBPACKAGES.RPM)
 
-doc: $(SUBPACKAGES.DOC)
+clean: $(SUBPACKAGES.CLEAN)
 
 cleanrpm: $(SUBPACKAGES.CLEANRPM)
 
 cleandoc: $(SUBPACKAGES.CLEANDOC)
 
-clean: $(SUBPACKAGES.CLEAN)
+install: $(SUBPACKAGES) $(SUBPACKAGES.INSTALL)
+
+uninstall: $(SUBPACKAGES.UNINSTALL)
 
 cleanall: clean cleandoc cleanrpm
 
@@ -34,22 +48,30 @@ $(SUBPACKAGES):
 $(SUBPACKAGES.RPM): $(SUBPACKAGES)
 	$(MAKE) -C $(patsubst %.rpm,%, $@) rpm
 
-$(SUBPACKAGES.DOC):
-	$(MAKE) -C $(patsubst %.doc,%, $@) doc
-
-$(SUBPACKAGES.CLEANRPM):
-	$(MAKE) -C $(patsubst %.cleanrpm,%, $@) cleanrpm
+$(SUBPACKAGES.CLEAN):
+	$(MAKE) -C $(patsubst %.clean,%, $@) clean
 
 $(SUBPACKAGES.CLEANDOC):
 	$(MAKE) -C $(patsubst %.cleandoc,%, $@) cleandoc
 
-$(SUBPACKAGES.CLEAN):
-	$(MAKE) -C $(patsubst %.clean,%, $@) clean
+$(SUBPACKAGES.CLEANRPM):
+	$(MAKE) -C $(patsubst %.cleanrpm,%, $@) cleanrpm
 
-.PHONY: $(SUBPACKAGES) $(SUBPACKAGES.INSTALL) $(SUBPACKAGES.CLEAN) $(SUBPACKAGES.DOC) $(SUBPACKAGES.RPM) $(SUBPACKAGES.CLEANRPM) $(SUBPACKAGES.CLEANDOC)
+$(SUBPACKAGES.DOC):
+	$(MAKE) -C $(patsubst %.doc,%, $@) doc
+
+$(SUBPACKAGES.INSTALL): $(SUBPACKAGES)
+	$(MAKE) -C $(patsubst %.install,%, $@) install
+
+$(SUBPACKAGES.UNINSTALL): $(SUBPACKAGES)
+	$(MAKE) -C $(patsubst %.uninstall,%, $@) uninstall
 
 python:
 
 xhalarm:
 
-xhalcore: xhalarm
+xhalcore:
+
+xhalcore.install: xhalarm
+
+xhalcore.rpm: xhalarm

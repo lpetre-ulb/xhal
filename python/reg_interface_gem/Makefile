@@ -15,22 +15,22 @@ PackagePath  := $(shell pwd)
 PackageDir   := pkg/$(Namespace)/$(ShortPackage)
 ScriptDir    := pkg/$(Namespace)/scripts
 
+ProjectBase = $(BUILD_HOME)/$(Project)
+ConfigDir   = $(ProjectBase)/config
+
+include $(ConfigDir)/mfCommonDefs.mk
+include $(ConfigDir)/mfPythonDefs.mk
 
 # Explicitly define the modules that are being exported (for PEP420 compliance)
 PythonModules = ["$(Namespace).$(ShortPackage)"]
 $(info PythonModules=${PythonModules})
 
-REG_INTERFACE_GEM_VER_MAJOR:=$(shell $(BUILD_HOME)/$(Project)/config/tag2rel.sh | awk '{split($$0,a," "); print a[1];}' | awk '{split($$0,b,":"); print b[2];}')
-REG_INTERFACE_GEM_VER_MINOR:=$(shell $(BUILD_HOME)/$(Project)/config/tag2rel.sh | awk '{split($$0,a," "); print a[2];}' | awk '{split($$0,b,":"); print b[2];}')
-REG_INTERFACE_GEM_VER_PATCH:=$(shell $(BUILD_HOME)/$(Project)/config/tag2rel.sh | awk '{split($$0,a," "); print a[3];}' | awk '{split($$0,b,":"); print b[2];}')
+include $(ConfigDir)/mfPythonRPM.mk
+include $(ConfigDir)/mfSphinx.mk
 
-include $(BUILD_HOME)/$(Project)/config/mfCommonDefs.mk
-include $(BUILD_HOME)/$(Project)/config/mfPythonDefs.mk
-
-# include $(BUILD_HOME)/$(Project)/config/mfDefs.mk
-
-include $(BUILD_HOME)/$(Project)/config/mfPythonRPM.mk
-include $(BUILD_HOME)/$(Project)/config/mfSphinx.mk
+REG_INTERFACE_GEM_VER_MAJOR:=$(shell $(ConfigDir)/tag2rel.sh | awk '{split($$0,a," "); print a[1];}' | awk '{split($$0,b,":"); print b[2];}')
+REG_INTERFACE_GEM_VER_MINOR:=$(shell $(ConfigDir)/tag2rel.sh | awk '{split($$0,a," "); print a[2];}' | awk '{split($$0,b,":"); print b[2];}')
+REG_INTERFACE_GEM_VER_PATCH:=$(shell $(ConfigDir)/tag2rel.sh | awk '{split($$0,a," "); print a[3];}' | awk '{split($$0,b,":"); print b[2];}')
 
 default:
 	@echo "Running default target"
@@ -39,10 +39,7 @@ default:
 	@cp -rf __init__.py $(PackageDir)
 
 # need to ensure that the python only stuff is packaged into RPMs
-.PHONY: clean preprpm
-_rpmprep: preprpm
-	@echo "Running _rpmprep target"
-preprpm: default
+rpmprep: default
 	@echo "Running preprpm target"
 	$(MakeDir) $(ScriptDir)
 	@cp -rf scripts/*  $(ScriptDir)
@@ -60,11 +57,6 @@ clean:
 	-rm -f  pkg/MANIFEST.in
 	-rm -f  pkg/CHANGELOG.md
 	-rm -f  pkg/requirements.txt
-
-rpm: _rpmall _rpmarm _harvest
-	@echo "Running xhal reg_interface_gem rpm target"
-	find $(RPMBUILD_DIR)/dist -iname "*.rpm" -print0 -exec mv -t $(RPMBUILD_DIR) {} \+
-	find $(RPMBUILD_DIR)/arm -iname "*.rpm" -print0 -exec mv -t $(RPMBUILD_DIR) {} \+
 
 print-env:
 	@echo BUILD_HOME     $(BUILD_HOME)
