@@ -33,6 +33,7 @@ Libraries+=-llog4cplus -lxerces-c -lstdc++
 LDFLAGS+=-shared $(LibraryDirs)
 
 SRCS_XHAL = $(shell echo $(PackageSourceDir)/utils/*.cpp)
+SRCS_XHAL+= $(shell echo $(PackageSourceDir)/rpc/*.cpp)
 
 AUTODEPS_XHAL = $(patsubst $(PackageSourceDir)/%.cpp,$(PackageObjectDir)/%.d,$(SRCS_XHAL))
 

@@ -39,6 +39,7 @@ LDFLAGS = -shared $(LibraryDirs)
 
 SRCS_XHAL   = $(wildcard $(PackageSourceDir)/*.cpp)
 SRCS_UTILS  = $(wildcard $(PackageSourceDir)/utils/*.cpp)
+SRCS_UTILS += $(wildcard $(PackageSourceDir)/rpc/*.cpp)
 SRCS_XHALPY = $(wildcard $(PackageSourceDir)/python_wrappers/*.cpp)
 SRCS_RPCMAN = $(wildcard $(PackageSourceDir)/rpc_manager/*.cpp)
 # SRCS_EXES     = $(wildcard $(PackageSourceDir)/*.cxx)
