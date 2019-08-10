@@ -7,8 +7,8 @@
  * \author Louis Moureaux <lmoureau@ulb.ac.be>
  */
 
-#ifndef XHAL_RPC_REGSTER_H
-#define XHAL_RPC_REGSTER_H
+#ifndef XHAL_RPC_REGISTER_H
+#define XHAL_RPC_REGISTER_H
 
 #include "xhal/rpc/common.h"
 #include "xhal/rpc/compat.h"
