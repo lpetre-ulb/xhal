@@ -252,7 +252,7 @@ DLLEXPORT uint32_t genChannelScan(uint32_t nevts, uint32_t ohN, uint32_t mask, u
     return 0;
 } //End genChannelScan()
 
-DLLEXPORT uint32_t sbitRateScan(uint32_t ohMask, uint32_t dacMin, uint32_t dacMax, uint32_t dacStep, uint32_t ch, char * scanReg, uint32_t * resultDacVal, uint32_t * resultTrigRate, uint32_t * resultTrigRatePerVFAT, uint32_t nvfats)
+DLLEXPORT uint32_t sbitRateScan(uint32_t ohMask, uint32_t waitTime, uint32_t dacMin, uint32_t dacMax, uint32_t dacStep, uint32_t ch, char * scanReg, uint32_t * resultDacVal, uint32_t * resultTrigRate, uint32_t * resultTrigRatePerVFAT, uint32_t nvfats)
 {
     req = wisc::RPCMsg("calibration_routines.sbitRateScan");
 
@@ -261,6 +261,7 @@ DLLEXPORT uint32_t sbitRateScan(uint32_t ohMask, uint32_t dacMin, uint32_t dacMa
     req.set_word("dacStep", dacStep);
     req.set_word("ch", ch);
     req.set_word("ohMask", ohMask);
+    req.set_word("waitTime", waitTime);    
     req.set_string("scanReg", std::string(scanReg));
 
     wisc::RPCSvc* rpc_loc = getRPCptr();
