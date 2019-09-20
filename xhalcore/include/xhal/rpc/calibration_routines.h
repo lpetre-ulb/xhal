@@ -44,8 +44,8 @@ DLLEXPORT uint32_t genScan(uint32_t nevts, uint32_t ohN, uint32_t dacMin, uint32
         uint32_t ch, bool useCalPulse, bool currentPulse, uint32_t calScaleFactor, uint32_t mask, char * scanReg, bool useUltra, bool useExtTrig,
         uint32_t * result, uint32_t nvfats=24);
 DLLEXPORT uint32_t genChannelScan(uint32_t nevts, uint32_t ohN, uint32_t mask, uint32_t dacMin, uint32_t dacMax, uint32_t dacStep, bool useCalPulse, bool currentPulse, uint32_t calScaleFactor, bool useExtTrig, char * scanReg, bool useUltra, uint32_t * result, uint32_t nvfats=24);
-DLLEXPORT uint32_t sbitRateScan(uint32_t ohMask, uint32_t dacMin, uint32_t dacMax, uint32_t dacStep, uint32_t ch,
-        char * scanReg, uint32_t * resultDacVal, uint32_t * resultTrigRate, uint32_t * resultTrigRatePerVFAT, uint32_t nvfats=24);
+DLLEXPORT uint32_t sbitRateScan(uint32_t ohMask, uint32_t dacMin, uint32_t dacMax, uint32_t dacStep, uint32_t ch, char * scanReg,
+                                uint32_t * resultDacVal, uint32_t * resultTrigRate, uint32_t * resultTrigRatePerVFAT, uint32_t nvfats=24, uint32_t waitTime = 1);
 DLLEXPORT uint32_t ttcGenConf(uint32_t ohN, uint32_t mode, uint32_t type, uint32_t pulseDelay,
         uint32_t L1Ainterval, uint32_t nPulses, bool enable);
 DLLEXPORT uint32_t ttcGenToggle(uint32_t ohN, bool enable);
