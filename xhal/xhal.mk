@@ -40,16 +40,15 @@ XHAL_VER_PATCH:=$(shell $(ConfigDir)/tag2rel.sh | awk '{split($$0,a," "); print 
 IncludeDirs+= $(XDAQ_ROOT)/include
 IncludeDirs+= $(PackageIncludeDir)
 IncludeDirs+= $(PackageIncludeDir)/xhal/extern
-# IncludeDirs+= $(PackageIncludeDir)/server
-# IncludeDirs+= $(PackageIncludeDir)/client
 INC=$(IncludeDirs:%=-I%)
 
+Libraries+=-llog4cplus -lxerces-c -lstdc++
 ifeq ($(Arch),x86_64)
-Libraries+=-llog4cplus -lxerces-c -lwiscrpcsvc -lstdc++
+Libraries+=-lwiscrpcsvc
 LibraryDirs+=-L$(XDAQ_ROOT)/lib
 LibraryDirs+=-L/opt/wiscrpcsvc/lib
 else
-Libraries+=-llog4cplus -lxerces-c -lstdc++
+
 endif
 
 LibraryDirs+=-L$(PackageLibraryDir)
@@ -234,6 +233,30 @@ $(XHALPY_LIB): $(OBJS_XHALPY) $(XHAL_LIB) $(RPCMAN_LIB)
 	$(MakeDir) -p $(@D)
 	$(CXX) $(ADDFLAGS) $(LDFLAGS) -L$(PYTHON_LIB_PREFIX) -o $(@D)/$(LibraryFull) $^ $(Libraries) -lboost_python -l$(PYTHON_LIB) -lxhal-base -lxhal-rpcman
 	$(link-sonames)
+
+ifeq ($(Arch),x86_64)
+else
+PETA_PATH?=/opt/gem-peta-stage
+TARGET_BOARD?=ctp7
+.PHONY: crosslibinstall crosslibuninstall
+
+install: crosslibinstall
+
+## @xhal install libraries for cross-compilation
+crosslibinstall:
+	echo "Installing cross-compiler libs"
+	if [ -d $(PackageLibraryDir) ]; then \
+	   cd $(PackageLibraryDir); \
+	   find . -type f -exec sh -ec 'install -D -m 755 $$0 $(INSTALL_PREFIX)$(PETA_PATH)/$(TARGET_BOARD)/$(INSTALL_PATH)/lib/$$0' {} \; ; \
+	   find . -type l -exec sh -ec 'if [ -n "$${0}" ]; then ln -sf $$(basename $$(readlink $$0)) $(INSTALL_PREFIX)$(PETA_PATH)/$(TARGET_BOARD)/$(INSTALL_PATH)/lib/$${0##./}; fi' {} \; ; \
+	fi
+
+uninstall: crosslibuninstall
+
+## @xhal uninstall libraries for cross-compilation
+crosslibuninstall:
+	$(RM) $(INSTALL_PREFIX)$(PETA_PATH)/$(TARGET_BOARD)/$(INSTALL_PATH)
+endif
 
 clean:
 	$(RM) $(OBJS_XHAL) $(OBJS_CLIENT) $(OBJS_SERVER) $(OBJS_RPCMAN) $(OBJS_XHALPY)
