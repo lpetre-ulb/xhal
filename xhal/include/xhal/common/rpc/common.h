@@ -272,7 +272,7 @@ namespace xhal {
          *
          * 1. It delegates the deserialization to a well-known function.
          * 2. It aims at enforcing maximum type compatibility with the UW RPC API by
-         *    remembering the developer that she/he can transmit defined types over the
+         *    reminding the developer that she/he can transmit defined types over the
          *    network.
          */
         template<typename T>
@@ -454,7 +454,7 @@ namespace xhal {
        * };
        *
        * // The non-intrusive version allows to serialize objects defined in a library
-       * // Simply define the serialize function in the xhal::rpc namespace or the namespace
+       * // Simply define the serialize function in the xhal::common::rpc namespace or the namespace
        * // where the type is defined with two parameters (1) A message (i.e. the serializer
        * // or deserializer) and (2) the custom type
        * namespace xhal { namspace rpc {

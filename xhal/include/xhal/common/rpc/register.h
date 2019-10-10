@@ -57,7 +57,7 @@ namespace xhal {
        * and then serializes the return value to the @c wisc::RPCMsg.
        */
       template<typename Method,
-               typename std::enable_if<std::is_base_of<xhal::rpc::Method, Method>::value, int>::type = 0
+               typename std::enable_if<std::is_base_of<xhal::common::rpc::Method, Method>::value, int>::type = 0
               >
       void invoke(const wisc::RPCMsg *request, wisc::RPCMsg *response) noexcept {
         try {
@@ -103,7 +103,7 @@ namespace xhal {
         // follow the same convention
         return modmgr->register_method(abiVersion,
                                        typeid(Method).name(),
-                                       xhal::rpc::invoke<Method>);
+                                       xhal::common::rpc::invoke<Method>);
       }
     }
   }

@@ -32,7 +32,7 @@ namespace xhal {
        */
       template<typename Method,
                typename... Args,
-               typename std::enable_if<std::is_base_of<xhal::rpc::Method, Method>::value, int>::type = 0
+               typename std::enable_if<std::is_base_of<xhal::common::rpc::Method, Method>::value, int>::type = 0
               >
       helper::functor_return_t<Method> call(wisc::RPCSvc &connection, Args&&... args);
 
@@ -48,7 +48,7 @@ namespace xhal {
          */
         template<typename Method,
                  typename... Args,
-                 typename std::enable_if<std::is_base_of<xhal::rpc::Method, Method>::value, int>::type
+                 typename std::enable_if<std::is_base_of<xhal::common::rpc::Method, Method>::value, int>::type
                 >
         friend helper::functor_return_t<Method> call(wisc::RPCSvc &connection,
                                                      Args&&... args);
@@ -88,7 +88,7 @@ namespace xhal {
          */
         template<typename Method,
                  typename... Args,
-                 typename std::enable_if<std::is_base_of<xhal::rpc::Method, Method>::value, int>::type
+                 typename std::enable_if<std::is_base_of<xhal::common::rpc::Method, Method>::value, int>::type
                 >
         friend helper::functor_return_t<Method> call(wisc::RPCSvc &connection,
                                                      Args&&... args);
@@ -107,7 +107,7 @@ namespace xhal {
       /* Implementation */
       template<typename Method,
                typename... Args,
-               typename std::enable_if<std::is_base_of<xhal::rpc::Method, Method>::value, int>::type
+               typename std::enable_if<std::is_base_of<xhal::common::rpc::Method, Method>::value, int>::type
               >
       helper::functor_return_t<Method> call(wisc::RPCSvc &connection, Args&&... args)
       {
