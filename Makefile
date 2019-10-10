@@ -90,7 +90,7 @@ $(SUBPACKAGES.DOC):
 $(SUBPACKAGES.INSTALL): $(SUBPACKAGES)
 	$(MAKE) -C $(patsubst %.install,%, $@) install
 
-$(SUBPACKAGES.UNINSTALL): $(SUBPACKAGES)
+$(SUBPACKAGES.UNINSTALL):
 	$(MAKE) -C $(patsubst %.uninstall,%, $@) uninstall
 
 $(SUBPACKAGES.RELEASE): $(SUBPACKAGES)

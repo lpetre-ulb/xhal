@@ -22,7 +22,7 @@ TARGETS.RELEASE    := $(patsubst %,%.release,     $(TARGETS))
 	$(TARGETS.RELEASE)
 
 .PHONY: all default install uninstall rpm release
-.PHONY: clean cleanall cleanrpm cleanallrpm
+.PHONY: clean cleanrpm cleandoc cleanallrpm cleanall
 
 default: all
 

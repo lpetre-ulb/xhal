@@ -45,15 +45,15 @@ INC=$(IncludeDirs:%=-I%)
 Libraries+=-llog4cplus -lxerces-c -lstdc++
 ifeq ($(Arch),x86_64)
 Libraries+=-lwiscrpcsvc
-LibraryDirs+=-L$(XDAQ_ROOT)/lib
-LibraryDirs+=-L/opt/wiscrpcsvc/lib
+LibraryDirs+=$(XDAQ_ROOT)/lib
+LibraryDirs+=/opt/wiscrpcsvc/lib
 else
 
 endif
 
-LibraryDirs+=-L$(PackageLibraryDir)
+LibraryDirs+=$(PackageLibraryDir)
 
-LDFLAGS+= -shared $(LibraryDirs)
+LDFLAGS+=$(LibraryDirs:%=-L%)
 
 SRCS_XHAL   = $(wildcard $(PackageSourceDir)/common/utils/*.cpp)
 SRCS_XHAL  += $(wildcard $(PackageSourceDir)/common/rpc/*.cpp)
@@ -144,7 +144,7 @@ default: $(TARGETS)
 rpmprep: build doc
 
 # Define as dependency everything that should cause a rebuild
-TarballDependencies = $(XHAL_LIB) $(SERVER_LIB) Makefile xhal.mk spec.template
+TarballDependencies = $(XHAL_LIB) $(SERVER_LIB) Makefile xhal.mk spec.template $(PackageIncludeDir)/packageinfo.h
 ifeq ($(Arch),x86_64)
 TarballDependencies+= $(CLIENT_LIB) $(XHALPY_LIB) $(RPCMAN_LIB)
 else
@@ -211,27 +211,27 @@ $(TargetLibraries):
 
 $(XHAL_LIB): $(OBJS_XHAL)
 	$(MakeDir) -p $(@D)
-	$(CXX) $(ADDFLAGS) $(LDFLAGS) -o $(@D)/$(LibraryFull) $^ $(Libraries)
+	$(CXX) $(ADDFLAGS) $(LDFLAGS) $(SOFLAGS) -o $(@D)/$(LibraryFull) $^ $(Libraries)
 	$(link-sonames)
 
 $(CLIENT_LIB): $(OBJS_CLIENT)
 	$(MakeDir) -p $(@D)
-	$(CXX) $(ADDFLAGS) $(LDFLAGS) -o $(@D)/$(LibraryFull) $^ $(Libraries)
+	$(CXX) $(ADDFLAGS) $(LDFLAGS) $(SOFLAGS) -o $(@D)/$(LibraryFull) $^ $(Libraries)
 	$(link-sonames)
 
 $(SERVER_LIB): $(OBJS_SERVER)
 	$(MakeDir) -p $(@D)
-	$(CXX) $(ADDFLAGS) $(LDFLAGS) -o $(@D)/$(LibraryFull) $^ $(Libraries)
+	$(CXX) $(ADDFLAGS) $(LDFLAGS) $(SOFLAGS) -o $(@D)/$(LibraryFull) $^ $(Libraries)
 	$(link-sonames)
 
 $(RPCMAN_LIB): $(OBJS_RPCMAN)
 	$(MakeDir) -p $(@D)
-	$(CXX) $(ADDFLAGS) $(LDFLAGS) -o $(@D)/$(LibraryFull) $^ $(Libraries)
+	$(CXX) $(ADDFLAGS) $(LDFLAGS) $(SOFLAGS) -o $(@D)/$(LibraryFull) $^ $(Libraries)
 	$(link-sonames)
 
 $(XHALPY_LIB): $(OBJS_XHALPY) $(XHAL_LIB) $(RPCMAN_LIB)
 	$(MakeDir) -p $(@D)
-	$(CXX) $(ADDFLAGS) $(LDFLAGS) -L$(PYTHON_LIB_PREFIX) -o $(@D)/$(LibraryFull) $^ $(Libraries) -lboost_python -l$(PYTHON_LIB) -lxhal-base -lxhal-rpcman
+	$(CXX) $(ADDFLAGS) $(LDFLAGS) $(SOFLAGS) -L$(PYTHON_LIB_PREFIX) -o $(@D)/$(LibraryFull) $^ $(Libraries) -lboost_python -l$(PYTHON_LIB) -lxhal-base -lxhal-rpcman
 	$(link-sonames)
 
 ifeq ($(Arch),x86_64)

@@ -56,18 +56,18 @@ AutoReq: no
 __description__
 
 %if %not_arm
-## xhal-client subpackage
+## %{_packagename}-client subpackage
 %package client
 Summary: Client package for %{_packagename}
 Requires: __client_requires_list__
 BuildRequires: __client_build_requires_list__
 
 %description client
-Client libraries of the xhal package
+Client libraries of the %{_packagename} package
 %endif
 
 %if %is_arm
-%package -n ctp7-xhal-libs
+%package -n ctp7-%{_packagename}-libs
 Summary: Libraries for cross-compiling %{_packagename} dependent applications for CTP7
 Prefix: /opt/gem-peta-stage/ctp7/%{_prefix}
 Requires: gem-peta-stage-ctp7
@@ -75,20 +75,20 @@ BuildRequires: __build_requires_list__,__server_build_requires_list__
 BuildArch: noarch
 AutoReq: no
 
-%description -n ctp7-xhal-libs
+%description -n ctp7-%{_packagename}-libs
 Provides the %{_packagename} libraries for the CTP7.
 These libraries are used when cross-compiling CTP7 applications.
 
 %endif
 
-## xhal-server subpackage
+## %{_packagename}-server subpackage
 %package server
 Summary: Server package for %{_packagename}
 Requires: __server_requires_list__
 BuildRequires: __server_build_requires_list__
 
 %description server
-Server libraries of the xhal package
+Server libraries of the %{_packagename} package
 
 ## Only build devel RPMs for non-ARM
 %if %not_arm
@@ -104,14 +104,14 @@ Summary: Development files for %{_packagename}-server
 Requires: %{_packagename}-server
 
 %description -n %{_packagename}-server-devel
-Development package for the server libraries of the xhal package
+Development package for the server libraries of the %{_packagename} package
 
 %package -n %{_packagename}-client-devel
 Summary: Development package for %{_packagename}-client
 Requires: %{_packagename}-client
 
 %description -n %{_packagename}-client-devel
-Development package for the client libraries of the xhal package
+Development package for the client libraries of the %{_packagename} package
 
 %endif
 
@@ -119,7 +119,7 @@ Development package for the client libraries of the xhal package
 #%%%if %not_arm
 %package -n %{_packagename}-debuginfo
 Summary: Debuginfos for %{_packagename}
-Requires: %{_packagename}
+Requires: %{_packagename}, %{_packagename}-devel
 
 %description -n %{_packagename}-debuginfo
 Debuginfos for the %{_packagename} package
@@ -129,16 +129,16 @@ Debuginfos for the %{_packagename} package
 #%%##%%Requires: %{_packagename}-server
 #%%##%%
 #%%##%%%description -n %{_packagename}-server-debuginfo
-#%%##%%Debuginfos for the server libraries of the xhal package
+#%%##%%Debuginfos for the server libraries of the %{_packagename} package
 
-## xhal-client is not for ARM
-## xhal-client package and subpackages
+## %{_packagename}-client is not for ARM
+## %{_packagename}-client package and subpackages
 #%%##%%%package -n %{_packagename}-client-debuginfo
 #%%##%%Summary: Debuginfo for %{_packagename}-client
 #%%##%%Requires: %{_packagename}-client
 #%%##%%
 #%%##%%%description -n %{_packagename}-client-debuginfo
-#%%##%%Debuginfos for the client libraries of the xhal package
+#%%##%%Debuginfos for the client libraries of the %{_packagename} package
 #%%%endif
 
 # %pre
@@ -242,13 +242,13 @@ popd
 #
 # Files that go in the binary RPM
 #
-%files -n ctp7-xhal-libs
+%files -n ctp7-%{_packagename}-libs
 %defattr(-,root,root,0755)
 %attr(0755,root,root) %{prefix}/lib/libxhal-*.so*
 
 ## Tries to put in the /mnt/persistent tree
 ## %%%dir
-## %%%docdir /opt/xhal
+## %%%docdir /opt/%{_packagename}
 ## %%%doc %{_project}/%{_packagename}/MAINTAINER.md
 ## %%%doc %{_project}/%{_packagename}/README.md
 ## %%%doc %{_project}/%{_packagename}/CHANGELOG.md
@@ -264,6 +264,7 @@ popd
 %files -n %{_packagename}-devel
 %defattr(-,root,root,0755)
 %attr(0644,root,root) %{_prefix}/include/xhal/extern/wisc*.h
+%attr(0644,root,root) %{_prefix}/include/xhal/extern/ModuleManager.h
 
 %dir
 %{_prefix}/include/xhal/common
