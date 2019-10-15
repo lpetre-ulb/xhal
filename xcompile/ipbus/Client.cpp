@@ -14,6 +14,11 @@
 static bool memsvc_inited = false;
 static memsvc_handle_t memhub;
 
+Client::~Client()
+{
+	close(this->fd);
+}
+
 bool Client::write_ready()
 {
 	return obuf.size();
@@ -51,6 +56,8 @@ bool Client::run_io()
 	ssize_t readcount = recv(this->fd, buf, 128, MSG_DONTWAIT);
 	if (readcount < 0 && errno != EAGAIN)
 		return false; // Error or disconnect.
+	if (readcount == 0)
+		return false;
 	if (readcount)
 		this->ibuf += std::string(buf, readcount);
 

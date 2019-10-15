@@ -44,8 +44,9 @@ class Client {
 		std::string obuf;
 
 	public:
-		const int fd;
+		int fd;
 		Client(int fd) : fd(fd) { };
+		~Client();
 
 		bool write_ready();
 		bool read_ready();

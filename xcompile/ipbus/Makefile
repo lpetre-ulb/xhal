@@ -13,14 +13,14 @@ all: build
 build: $(APP)
 
 $(APP): $(APP_OBJS)
-	$(CXX) -std=c++11 $(CFLAGS) $(LDFLAGS) -o $@ $(APP_OBJS) $(LDLIBS) -lmemsvc -lmemhub
+	$(CXX) -std=c++11 $(CFLAGS) $(LDFLAGS) -o $@ $(APP_OBJS) $(LDLIBS) -lmemsvc -lmemhub -L${BUILD_HOME}/xhal/xcompile/memhub
 
 clean:
 	-rm -f $(APP) *.elf *.gdb *.o
 
 
 %.o: %.cpp
-	$(CXX) -std=c++0x -c $(CFLAGS) -o $@ $<
+	$(CXX) -std=c++0x -c $(CFLAGS) -I${BUILD_HOME}/ctp7_modules/include -o $@ $<
 
 .PHONY: build
 help:

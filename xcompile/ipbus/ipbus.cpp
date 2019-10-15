@@ -52,18 +52,20 @@ int main(int argc, char *argv[])
 		FD_ZERO(&rfds);
 		FD_ZERO(&wfds);
 		int maxfd = 0;
+
 		if (clients.size() < MAX_CLIENTS) {
 			FD_SET(listenfd, &rfds);
 			maxfd = listenfd;
 		} else {
-      // when MAX_CLIENTS number of sockets reached, close them and drain the queue
-      for (auto it = clients.begin(), eit = clients.end(); it != eit; ++it) {
-        close(it->fd);
-      }
-      clients.clear();
-      FD_SET(listenfd, &rfds);
-      maxfd = listenfd;
-    }
+			// when MAX_CLIENTS number of sockets reached, close them and drain the queue
+			for (auto it = clients.begin(), eit = clients.end(); it != eit; ++it) {
+				close(it->fd);
+			}
+			clients.clear();
+			FD_SET(listenfd, &rfds);
+			maxfd = listenfd;
+		}
+
 		for (auto it = clients.begin(), eit = clients.end(); it != eit; ++it) {
 			if (it->write_ready()) {
 				FD_SET(it->fd, &wfds);
@@ -86,9 +88,17 @@ int main(int argc, char *argv[])
 		}
 
 		// Process any existing connections.
-		for (auto it = clients.begin(), eit = clients.end(); it != eit; ++it) {
-			if (FD_ISSET(it->fd, &rfds) || FD_ISSET(it->fd, &wfds))
-				it->run_io();
+		for (auto it = clients.begin(); it != clients.end();) {
+			bool disconnect = false;
+
+			if (FD_ISSET(it->fd, &rfds) || FD_ISSET(it->fd, &wfds)) {
+				disconnect = !it->run_io();
+			}
+
+			if (disconnect)
+				it = clients.erase(it);
+			else
+				++it;
 		}
 
 		// Accept New Connections
