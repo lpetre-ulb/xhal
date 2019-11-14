@@ -41,8 +41,11 @@ default:
 	@cp -rf __init__.py $(PackageDir)
 
 # Override, as this package uses pkg/setup.py as the template file
-$(PackageSetupFile): pkg/setup.py
+$(PackageSetupFile): pkg/setup.py pkg/setup.cfg
 $(PackagePrepFile): $(PythonSources) Makefile | default
+	@cp -rf $(ConfigDir)/scriptlets/installrpm.sh pkg/
+	@perl -pi -e "s|__PYTHON_SCRIPT_PATH__|$(INSTALL_PATH)/bin|g" pkg/installrpm.sh
+	@perl -pi -e "s|__PYTHON_NAMESPACE__|$(Namespace)|g" pkg/installrpm.sh
 	$(MakeDir) $(ScriptDir)
 	@cp -rf scripts/*  $(ScriptDir)
 	@cp -rf core $(PackageDir)
@@ -60,6 +63,7 @@ clean:
 	-rm -f  pkg/MANIFEST.in
 	-rm -f  pkg/CHANGELOG.md
 	-rm -f  pkg/requirements.txt
+	-rm -f  pkg/installrpm.sh
 
 print-env:
 	@echo BUILD_HOME     $(BUILD_HOME)
