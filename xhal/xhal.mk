@@ -46,7 +46,7 @@ Libraries+=-llog4cplus -lxerces-c -lstdc++
 ifeq ($(Arch),x86_64)
 Libraries+=-lwiscrpcsvc
 LibraryDirs+=$(XDAQ_ROOT)/lib
-LibraryDirs+=/opt/wiscrpcsvc/lib
+LibraryDirs+=$(WISCRPC_ROOT)/lib
 else
 
 endif
@@ -236,26 +236,12 @@ $(XHALPY_LIB): $(OBJS_XHALPY) $(XHAL_LIB) $(RPCMAN_LIB)
 
 ifeq ($(Arch),x86_64)
 else
-PETA_PATH?=/opt/gem-peta-stage
 TARGET_BOARD?=ctp7
-.PHONY: crosslibinstall crosslibuninstall
 
 install: crosslibinstall
 
-## @xhal install libraries for cross-compilation
-crosslibinstall:
-	echo "Installing cross-compiler libs"
-	if [ -d $(PackageLibraryDir) ]; then \
-	   cd $(PackageLibraryDir); \
-	   find . -type f -exec sh -ec 'install -D -m 755 $$0 $(INSTALL_PREFIX)$(PETA_PATH)/$(TARGET_BOARD)/$(INSTALL_PATH)/lib/$$0' {} \; ; \
-	   find . -type l -exec sh -ec 'if [ -n "$${0}" ]; then ln -sf $$(basename $$(readlink $$0)) $(INSTALL_PREFIX)$(PETA_PATH)/$(TARGET_BOARD)/$(INSTALL_PATH)/lib/$${0##./}; fi' {} \; ; \
-	fi
-
 uninstall: crosslibuninstall
 
-## @xhal uninstall libraries for cross-compilation
-crosslibuninstall:
-	$(RM) $(INSTALL_PREFIX)$(PETA_PATH)/$(TARGET_BOARD)/$(INSTALL_PATH)
 endif
 
 clean:
