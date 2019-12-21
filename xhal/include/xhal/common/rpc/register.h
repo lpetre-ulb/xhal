@@ -15,7 +15,7 @@
 #include "xhal/common/rpc/exceptions.h"
 #include "xhal/common/rpc/helper.h"
 
-#include "moduleapi.h" // Only present in the CTP7 modules
+#include "xhal/extern/ModuleManager.h" // Only present in the CTP7 modules
 
 #include <typeinfo>
 
