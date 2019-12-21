@@ -50,9 +50,9 @@ variables: *common_variables
   image: gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6
 
 .cc7setup: &cc7setup
-  image: gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7
-  # image: gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7:xdaq14-6
-  # image: gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7:xdaq15
+  image: gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7-xdaq14
+  # image: gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7-xdaq14-6
+  # image: gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7-xdaq15
 
 .cc8setup: &cc8setup
   image: gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc8
@@ -62,14 +62,17 @@ variables: *common_variables
 ### ------------------- Shared setup between stages ------------------- ###
 .common_setup: &common_setup |-
   mkdir -p ${ARTIFACTS_DIR}
-  pip install -I --user "pip" "importlib" "codecov" "setuptools<38.2"
+  pip install -I --user "pip" "importlib" "codecov" "setuptools<38.2" "sphinxcontrib-napoleon==0.2.9"
   sudo yum install -y wiscrpcsvc\* --enablerepo=gemos*
   sudo yum install -y reedmuller\* --enablerepo=gemos*
 
 .common_zynq_setup: &common_zynq_setup |-
   sudo yum install -y gem-peta-stage-ctp7 --enablerepo=gemos*
   sudo yum install -y lmdb\*
-  source ${XILINX_SDK_PATH}/2016.2/settings64.sh
+  # sudo /opt/arm/getarm.sh 4.9-2017.01
+  export PETA_STAGE=/opt/gem-peta-stage/ctp7
+  export PATH=/opt/arm/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin:${PATH}
+  # source ${XILINX_SDK_PATH}/2016.2/settings64.sh
 
 .retry_settings: &retry_settings
   retry:
@@ -114,7 +117,7 @@ variables: *common_variables
     - merge_requests
     - tags
   tags:
-    - peta
+    # - peta
   stage: compile
   before_script:
     - *common_setup
@@ -200,7 +203,7 @@ test:abi:cc7:
   <<: *cc7setup
   stage: test
   tags:
-    - peta
+   # - peta
   only:
     - merge_requests
   dependencies:
@@ -272,7 +275,7 @@ package:cc7:
     # - chat                ## should go into releases/'testing' or unstable?
     # - api                 ## should go into releases/'testing' or unstable?
   tags:
-    - peta
+   # - peta
   dependencies:
     - compile:cc7
     - docs
@@ -309,6 +312,7 @@ package:cc7:
     - *touch_package_artifacts
     - make release
     - cp -rfp release/* ${ARTIFACTS_DIR}
+    - 'echo "Running as: " $(whoami)'
     - ${BUILD_HOME}/${CI_PROJECT_NAME}/config/ci/publish_eos.sh
     # - push python packages to pypi/conda
     # - push RPMs to packagecloud.io
@@ -322,6 +326,7 @@ publish:
     - /^release.*$/@cms-gem-daq-project/xhal
     - /^feature.*$/@cms-gem-daq-project/xhal
     - /^citest.*$/@cms-gem-daq-project/xhal
+    - /^citest.*$/@sturdy/xhal
     - /^develop$/@cms-gem-daq-project/xhal
     - /^master$/@cms-gem-daq-project/xhal
     - merge_requests@cms-gem-daq-project/xhal
