@@ -18,10 +18,10 @@ include $(ConfigDir)/mfCommonDefs.mk
 ifeq ($(Arch),x86_64)
 include $(ConfigDir)/mfPythonDefs.mk
 CFLAGS=-Wall -pthread
-ADDFLAGS=-fPIC -std=c++11 -std=gnu++11 -m64
+ADDFLAGS=-fPIC -std=c++14 -m64
 else
 include $(ConfigDir)/mfZynq.mk
-ADDFLAGS=-std=gnu++14
+ADDFLAGS=-std=c++14
 endif
 
 ADDFLAGS+=$(OPTFLAGS)
