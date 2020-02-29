@@ -1,5 +1,7 @@
 #include "xhal/client/XHALDevice.h"
 
+#include <string>
+
 xhal::client::XHALDevice::XHALDevice(const std::string& board_domain_name, const std::string& address_table_filename) :
   xhal::client::XHALInterface(board_domain_name),
   m_address_table_filename(address_table_filename)
@@ -62,7 +64,7 @@ uint32_t xhal::client::XHALDevice::readReg(std::string regName)
     return result;
   } else {
     XHAL_ERROR("Register not found in address table!");
-    throw xhal::common::utils::XHALXMLParserException(strcat("XHAL XML exception: can't find node", regName.c_str()));
+    throw xhal::common::utils::XHALXMLParserException(std::string("XHAL XML exception: can't find node") + regName);
   }
 }
 
@@ -140,7 +142,7 @@ void xhal::client::XHALDevice::writeReg(std::string regName, uint32_t value)
     }
   } else {
     XHAL_ERROR("Register not found in address table!");
-    throw xhal::common::utils::XHALXMLParserException(strcat("XHAL XML exception: can't find node", regName.c_str()));
+    throw xhal::common::utils::XHALXMLParserException(std::string("XHAL XML exception: can't find node") + regName);
   }
 }
 
