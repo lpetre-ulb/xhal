@@ -545,6 +545,49 @@ namespace xhal {
           msg & elem;
         }
       }
+
+      /**
+       * @brief (De)serializer for @c bool
+       */
+      template<typename Message>
+      inline void save(Message &msg, const bool &value) {
+        msg << static_cast<std::uint32_t>(value);
+      }
+      template<typename Message>
+      inline void load(Message &msg, bool &value) {
+        std::uint32_t tmp;
+        msg >> tmp;
+        value = tmp;
+      }
+
+      /**
+       * @brief (De)serializer for @c std::uint8_t
+       */
+      template<typename Message>
+      inline void save(Message &msg, const std::uint8_t &value) {
+        msg << static_cast<std::uint32_t>(value);
+      }
+      template<typename Message>
+      inline void load(Message &msg, std::uint8_t &value) {
+        std::uint32_t tmp;
+        msg >> tmp;
+        value = tmp;
+      }
+
+      /**
+       * @brief (De)serializer for @c std::uint16_t
+       */
+      template<typename Message>
+      inline void save(Message &msg, const std::uint16_t &value) {
+        msg << static_cast<std::uint32_t>(value);
+      }
+      template<typename Message>
+      inline void load(Message &msg, std::uint16_t &value) {
+        std::uint32_t tmp;
+        msg >> tmp;
+        value = tmp;
+      }
+
     }
   }
 }
