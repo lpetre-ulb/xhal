@@ -94,7 +94,7 @@ namespace xhal {
          *    network.
          */
         template<typename T>
-        inline void save(const T &t) {
+        inline void saveImpl(const T &t)
           // This const_cast is safe when the API is used as intented
           // More precisely when the object t is modified only with the operator&
           serialize(*this, const_cast<T &>(t));
@@ -103,28 +103,28 @@ namespace xhal {
         /**
          * @brief Adds a @c std::uint32_t to the message
          */
-        inline void save(const std::uint32_t value) {
+        inline void saveImpl(const std::uint32_t value) {
           m_wiscMsg->set_word(std::to_string(dispenseKey()), value);
         }
 
         /**
          * @brief Adds a @c std::vector<std::uint32_t> to the message
          */
-        inline void save(const std::vector<std::uint32_t> &value) {
+        inline void saveImpl(const std::vector<std::uint32_t> &value) {
           m_wiscMsg->set_word_array(std::to_string(dispenseKey()), value);
         }
 
         /**
          * @brief Adds a @c std::string to the message
          */
-        inline void save(const std::string &value) {
+        inline void saveImpl(const std::string &value) {
           m_wiscMsg->set_string(std::to_string(dispenseKey()), value);
         }
 
         /**
          * @brief Adds a @c std::vector<std::string> to the message
          */
-        inline void save(const std::vector<std::string> &value) {
+        inline void saveImpl(const std::vector<std::string> &value) {
           m_wiscMsg->set_string_array(std::to_string(dispenseKey()), value);
         }
 
@@ -135,7 +135,7 @@ namespace xhal {
                  std::size_t N,
                  typename std::enable_if<std::is_integral<T>::value && !helper::is_bool<T>::value, int>::type = 0
                 >
-        inline void save(const std::array<T, N> &value) {
+        inline void saveImpl(const std::array<T, N> &value) {
           m_wiscMsg->set_binarydata(std::to_string(dispenseKey()), value.data(), N*sizeof(T));
         }
 
@@ -143,7 +143,7 @@ namespace xhal {
          * @brief Adds a @c std::map<std::uint32_t, T> to the message where @c T is a serializable type
          */
         template<typename T>
-        inline void save(const std::map<std::uint32_t, T> &value) {
+        inline void saveImpl(const std::map<std::uint32_t, T> &value) {
           // The first RPC key stores the std::map keys
           // This is required to know the std::map size at deserialization
           const auto keysKey = dispenseKey();
@@ -153,7 +153,7 @@ namespace xhal {
 
           for (const auto & elem : value) {
             keys.push_back(elem.first);
-            this->save(elem.second);
+            this->saveImpl(elem.second);
           }
 
           m_wiscMsg->set_word_array(std::to_string(keysKey), keys);
@@ -163,7 +163,7 @@ namespace xhal {
          * @brief Adds a @c std::map<std::string, T> to the message where @c T is a serializable type
          */
         template<typename T>
-        inline void save(const std::map<std::string, T> &value) {
+        inline void saveImpl(const std::map<std::string, T> &value) {
           // The first RPC key stores the std::map keys
           // This is required to know the std::map size at deserialization
           const auto keysKey = dispenseKey();
@@ -173,7 +173,7 @@ namespace xhal {
 
           for (const auto & elem : value) {
             keys.push_back(elem.first);
-            this->save(elem.second);
+            this->saveImpl(elem.second);
           }
 
           m_wiscMsg->set_string_array(std::to_string(keysKey), keys);
@@ -185,14 +185,14 @@ namespace xhal {
          * It should be used when setting the result from a function call.
          */
         template<typename T>
-        inline void save(const compat::void_holder<T> &holder) {
-          this->save(holder.get());
+        inline void saveImpl(const compat::void_holder<T> &holder) {
+          this->saveImpl(holder.get());
         }
 
         /**
          * @brief Specialization for the @c void special case
          */
-        inline void save(compat::void_holder<void>) {}
+        inline void saveImpl(compat::void_holder<void>) {}
 
         /**
          * @brief Serializes the arguments from a @c std::tuple
@@ -204,9 +204,9 @@ namespace xhal {
                  typename... Args,
                  typename std::enable_if<I < sizeof...(Args), int>::type = 0
                 >
-        inline void save(const std::tuple<Args...> &args) {
-          this->save(std::get<I>(args));
-          this->save<I+1>(args);
+        inline void saveImpl(const std::tuple<Args...> &args) {
+          this->saveImpl(std::get<I>(args));
+          this->saveImpl<I+1>(args);
         }
 
         /**
@@ -216,7 +216,7 @@ namespace xhal {
                  typename... Args,
                  typename std::enable_if<I == sizeof...(Args), int>::type = 0
                 >
-        inline void save(const std::tuple<Args...> &) {}
+        inline void saveImpl(const std::tuple<Args...> &) {}
 
       public:
 
@@ -232,7 +232,7 @@ namespace xhal {
          */
         template<typename T>
         inline MessageSerializer & operator<<(const T &t) {
-          this->save(t);
+          this->saveImpl(t);
           return *this;
         }
 
@@ -245,7 +245,7 @@ namespace xhal {
          */
         template<typename T>
         inline MessageSerializer & operator&(const T &t) {
-          this->save(t);
+          this->saveImpl(t);
           return *this;
         }
 
@@ -276,35 +276,35 @@ namespace xhal {
          *    network.
          */
         template<typename T>
-        inline void load(T &t) {
+        inline void loadImpl(T &t)
           serialize(*this, t);
         }
 
         /**
          * @brief Retrieves a @c std::uint32_t from the message
          */
-        inline void load(uint32_t &value) {
+        inline void loadImpl(uint32_t &value) {
           value = m_wiscMsg->get_word(std::to_string(dispenseKey()));
         }
 
         /**
          * @brief Retrieves a @c std::vector<std::uint32_t> from the message
          */
-        inline void load(std::vector<std::uint32_t> &value) {
+        inline void loadImpl(std::vector<std::uint32_t> &value) {
           value = m_wiscMsg->get_word_array(std::to_string(dispenseKey()));
         }
 
         /**
          * @brief Retrieves a @c std::string from the message
          */
-        inline void load(std::string &value) {
+        inline void loadImpl(std::string &value) {
           value = m_wiscMsg->get_string(std::to_string(dispenseKey()));
         }
 
         /**
          * @brief Retrieves a @c std::vector<std::string> from the message
          */
-        inline void load(std::vector<std::string> &value) {
+        inline void loadImpl(std::vector<std::string> &value) {
           value = m_wiscMsg->get_string_array(std::to_string(dispenseKey()));
         }
 
@@ -315,7 +315,7 @@ namespace xhal {
                  std::size_t N,
                  typename std::enable_if<std::is_integral<T>::value && !helper::is_bool<T>::value, int>::type = 0
                 >
-        inline void load(std::array<T, N> &value) {
+        inline void loadImpl(std::array<T, N> &value) {
           m_wiscMsg->get_binarydata(std::to_string(dispenseKey()), value.data(), N*sizeof(T));
         }
 
@@ -323,12 +323,12 @@ namespace xhal {
          * @brief Retrieves a @c std::map<std::uint32_t, T> from the message where @c T is a serializable type
          */
         template<typename T>
-        inline void load(std::map<std::uint32_t, T> &value) {
+        inline void loadImpl(std::map<std::uint32_t, T> &value) {
           const auto keys = m_wiscMsg->get_word_array(std::to_string(dispenseKey()));
 
           for (const auto & key: keys) {
             T val;
-            this->load(val);
+            this->loadImpl(val);
             value.emplace(key, std::move(val));
           }
         }
@@ -337,12 +337,12 @@ namespace xhal {
          * @brief Retrieves a @c std::map<std::string, T> from the message where @c T is a serializable type
          */
         template<typename T>
-        inline void load(std::map<std::string, T> &value) {
+        inline void loadImpl(std::map<std::string, T> &value) {
           const auto keys = m_wiscMsg->get_string_array(std::to_string(dispenseKey()));
 
           for (const auto & key: keys) {
             T val;
-            this->load(val);
+            this->loadImpl(val);
             value.emplace(key, std::move(val));
           }
         }
@@ -354,14 +354,14 @@ namespace xhal {
          * It should be used when setting the result from a function.
          */
         template<typename T>
-        inline void load(compat::void_holder<T> &value) {
-          this->load(value.get());
+        inline void loadImpl(compat::void_holder<T> &value) {
+          this->loadImpl(value.get());
         }
 
         /**
          * @brief Specialization for the @c void special case
          */
-        inline void load(compat::void_holder<void>) {}
+        inline void loadImpl(compat::void_holder<void>) {}
 
         /**
          * @brief Fills in a @c std::tuple with data from the message
@@ -374,9 +374,9 @@ namespace xhal {
                  typename... Args,
                  typename std::enable_if<I < sizeof...(Args), int>::type = 0
                 >
-        inline void load(std::tuple<Args...> &args) {
-          this->load(std::get<I>(args));
-          this->load<I+1>(args);
+        inline void loadImpl(std::tuple<Args...> &args) {
+          this->loadImpl(std::get<I>(args));
+          this->loadImpl<I+1>(args);
         }
 
         /**
@@ -386,7 +386,7 @@ namespace xhal {
                  typename... Args,
                  typename std::enable_if<I == sizeof...(Args), int>::type = 0
                 >
-        inline void load(std::tuple<Args...> &) { }
+        inline void loadImpl(std::tuple<Args...> &) { }
 
       public:
 
@@ -402,7 +402,7 @@ namespace xhal {
          */
         template<typename T>
         inline MessageDeserializer & operator>>(T &t) {
-          this->load(t);
+          this->loadImpl(t);
           return *this;
         }
 
@@ -415,7 +415,7 @@ namespace xhal {
          */
         template<typename T>
         inline MessageDeserializer & operator&(T &t) {
-          this->load(t);
+          this->loadImpl(t);
           return *this;
         }
 
