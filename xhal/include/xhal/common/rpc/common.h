@@ -83,9 +83,30 @@ namespace xhal {
         wisc::RPCMsg *m_wiscMsg;
 
         /**
-         * @brief Serializes custom types if possible or else supresses implicit type conversions
+         * @brief Adds @c t to the message via a user provided serializer
+         */
+        template<typename T,
+                 typename std::enable_if<
+                   helper::is_serialize_present<MessageSerializer, T>::value, int>::type = 0>
+        inline void saveImpl(const T &t) {
+          // This const_cast is safe when the API is used as intented
+          // More precisely when the object t is modified only with the operator&
+          serialize(*this, const_cast<T &>(t));
+        }
+
+        /**
+         * @brief Adds @c t to the message via a split user provided serializer
+         */
+        template<typename T,
+                 typename std::enable_if<
+                   helper::is_save_present<MessageSerializer, T>::value, int>::type = 0>
+        inline void saveImpl(const T &t) {
+          save(*this, t);
+        }
+
+        /**
+         * @brief Supresses implicit type conversions and warns the user about the error
          *
-         * Every type not defined hereunder is taken care of by this templated function.
          * The function serves two purposes:
          *
          * 1. It delegates the serialization to a well-known function.
@@ -93,11 +114,13 @@ namespace xhal {
          *    remembering the developer that she/he can transmit defined types over the
          *    network.
          */
-        template<typename T>
-        inline void saveImpl(const T &t)
-          // This const_cast is safe when the API is used as intented
-          // More precisely when the object t is modified only with the operator&
-          serialize(*this, const_cast<T &>(t));
+        template<typename T,
+                 typename std::enable_if<
+                   !helper::is_serialize_present<MessageSerializer, T>::value &&
+                   !helper::is_save_present     <MessageSerializer, T>::value, int>::type = 0>
+        inline void saveImpl(const T&) {
+          static_assert(!std::is_same<T,T>::value,
+                        "Type serialization not natively supported. Writing custom serializer is required.");
         }
 
         /**
@@ -265,19 +288,41 @@ namespace xhal {
         const wisc::RPCMsg *m_wiscMsg;
 
         /**
-         * @brief Deserializes custom types if possible or else supresses implicit type conversion
+         * @brief Retrives @c t from the message via a user provided deserializer
+         */
+        template<typename T,
+                 typename std::enable_if<
+                   helper::is_serialize_present<MessageDeserializer, T>::value, int>::type = 0>
+        inline void loadImpl(T &t) {
+          serialize(*this, t);
+        }
+
+        /**
+         * @brief Retrives @c t from the message via a split user provided deserializer
+         */
+        template<typename T,
+                 typename std::enable_if<
+                   helper::is_load_present<MessageDeserializer, T>::value, int>::type = 0>
+        inline void loadImpl(T &t) {
+          load(*this, t);
+        }
+
+        /**
+         * @brief Supresses implicit type conversions and warns the user about the error
          *
          * Every type not defined hereunder is taken care of by this templated function.
-         * The function serves two purposes:
          *
          * 1. It delegates the deserialization to a well-known function.
          * 2. It aims at enforcing maximum type compatibility with the UW RPC API by
          *    reminding the developer that she/he can transmit defined types over the
          *    network.
          */
-        template<typename T>
-        inline void loadImpl(T &t)
-          serialize(*this, t);
+        template<typename T,
+                 typename std::enable_if<
+                   !helper::is_serialize_present<MessageDeserializer, T>::value &&
+                   !helper::is_load_present<MessageDeserializer, T>::value, int>::type = 0>
+        inline void loadImpl(const T&) {
+          static_assert(!std::is_same<T,T>::value, "Type not natively supported. Writing custom serializer is required.");
         }
 
         /**
@@ -425,8 +470,24 @@ namespace xhal {
        * @brief Provides a default (de)serialiazer in case the intrusive method is used
        */
       template<typename Message, typename T>
-      inline void serialize(Message &msg, T &t) {
+      inline auto serialize(Message &msg, T &t) -> decltype(t.serialize(msg)) {
         t.serialize(msg);
+      }
+
+      /**
+       * @brief Provides a default split serialiazer in case the intrusive method is used
+       */
+      template<typename Message, typename T>
+      inline auto save(Message &msg, const T &t) -> decltype(t.save(msg)) {
+        t.save(msg);
+      }
+
+      /**
+       * @brief Provides a default split deserialiazer in case the intrusive method is used
+       */
+      template<typename Message, typename T>
+      inline auto load(Message &msg, T &t) -> decltype(t.load(msg)) {
+        t.load(msg);
       }
 
       /**
@@ -450,6 +511,15 @@ namespace xhal {
        *     // which takes a message as parameter (i.e. the serializer or deserializer)
        *     template<class Message> inline void serialize(Message & msg) {
        *         msg & x & y;
+       *     }
+       *
+       *     // The (de)serializers can also be implemented as two split functions
+       *     // which also take a message as parameter (i.e. the serializer or deserializer)
+       *     template<class Message> inline void save(Message & msg) {
+       *         msg << x << y;
+       *     }
+       *     template<class Message> inline void load(Message & msg) {
+       *         msg >> x >> y;
        *     }
        * };
        *
