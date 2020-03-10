@@ -548,6 +548,22 @@ namespace xhal {
       }
 
       /**
+       * @brief (De)serializer for @c std::vector<T> where @c T is a (de)serializable type
+       */
+      template<typename Message, typename T>
+      inline void serialize(Message &msg, std::vector<T> &value) {
+        // 1. Store or retrieve the vector length
+        std::uint32_t length = value.size(); // no-op during deserialization
+        msg & length;
+        value.resize(length); // no-op during serialization
+
+        // 2. Store or retrieve the vector elements
+        for (std::uint32_t i = 0; i < length; ++i) {
+          msg & value[i];
+        }
+      }
+
+      /**
        * @brief (De)serializer for @c bool
        */
       template<typename Message>
