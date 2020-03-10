@@ -13,6 +13,7 @@
 
 #include <array>
 #include <cstdint>
+#include <cstring>
 #include <map>
 #include <string>
 #include <utility>
@@ -586,6 +587,25 @@ namespace xhal {
         std::uint32_t tmp;
         msg >> tmp;
         value = tmp;
+      }
+
+      /**
+       * @brief (De)serializer for the @float type
+       *
+       * Works only if @sizeof(float) is 4 and the representation 
+       * is the same on the client and the server.
+       */
+      template<typename Message>
+      inline void save(Message &msg, const float &value) {
+        std::uint32_t tmp;
+        std::memcpy(&tmp, &value, sizeof(std::uint32_t));
+        msg << tmp;
+      }
+      template<typename Message>
+      inline void load(Message &msg, float &value) {
+        std::uint32_t tmp;
+        msg >> tmp;
+        std::memcpy(&value, &tmp, sizeof(float));
       }
 
     }
