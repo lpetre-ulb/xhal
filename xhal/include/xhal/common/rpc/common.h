@@ -14,6 +14,7 @@
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <map>
 #include <string>
 #include <utility>
@@ -613,12 +614,20 @@ namespace xhal {
        */
       template<typename Message>
       inline void save(Message &msg, const float &value) {
+        // This serializer works only for IEEE 754 floating point numbers
+        static_assert(std::numeric_limits<float>::is_iec559,
+                      "Floating point representation not supported by the serializer.");
+
         std::uint32_t tmp;
         std::memcpy(&tmp, &value, sizeof(std::uint32_t));
         msg << tmp;
       }
       template<typename Message>
       inline void load(Message &msg, float &value) {
+        // This deserializer works only for IEEE 754 floating point numbers
+        static_assert(std::numeric_limits<float>::is_iec559,
+                      "Floating point representation not supported by the deserializer.");
+
         std::uint32_t tmp;
         msg >> tmp;
         std::memcpy(&value, &tmp, sizeof(float));
