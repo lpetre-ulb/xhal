@@ -13,6 +13,8 @@
 
 #include <array>
 #include <cstdint>
+#include <cstring>
+#include <limits>
 #include <map>
 #include <string>
 #include <utility>
@@ -83,9 +85,30 @@ namespace xhal {
         wisc::RPCMsg *m_wiscMsg;
 
         /**
-         * @brief Serializes custom types if possible or else supresses implicit type conversions
+         * @brief Adds @c t to the message via a user provided serializer
+         */
+        template<typename T,
+                 typename std::enable_if<
+                   helper::is_serialize_present<MessageSerializer, T>::value, int>::type = 0>
+        inline void saveImpl(const T &t) {
+          // This const_cast is safe when the API is used as intented
+          // More precisely when the object t is modified only with the operator&
+          serialize(*this, const_cast<T &>(t));
+        }
+
+        /**
+         * @brief Adds @c t to the message via a split user provided serializer
+         */
+        template<typename T,
+                 typename std::enable_if<
+                   helper::is_save_present<MessageSerializer, T>::value, int>::type = 0>
+        inline void saveImpl(const T &t) {
+          save(*this, t);
+        }
+
+        /**
+         * @brief Supresses implicit type conversions and warns the user about the error
          *
-         * Every type not defined hereunder is taken care of by this templated function.
          * The function serves two purposes:
          *
          * 1. It delegates the serialization to a well-known function.
@@ -93,38 +116,40 @@ namespace xhal {
          *    remembering the developer that she/he can transmit defined types over the
          *    network.
          */
-        template<typename T>
-        inline void save(const T &t) {
-          // This const_cast is safe when the API is used as intented
-          // More precisely when the object t is modified only with the operator&
-          serialize(*this, const_cast<T &>(t));
+        template<typename T,
+                 typename std::enable_if<
+                   !helper::is_serialize_present<MessageSerializer, T>::value &&
+                   !helper::is_save_present     <MessageSerializer, T>::value, int>::type = 0>
+        inline void saveImpl(const T&) {
+          static_assert(!std::is_same<T,T>::value,
+                        "Type serialization not natively supported. Writing custom serializer is required.");
         }
 
         /**
          * @brief Adds a @c std::uint32_t to the message
          */
-        inline void save(const std::uint32_t value) {
+        inline void saveImpl(const std::uint32_t value) {
           m_wiscMsg->set_word(std::to_string(dispenseKey()), value);
         }
 
         /**
          * @brief Adds a @c std::vector<std::uint32_t> to the message
          */
-        inline void save(const std::vector<std::uint32_t> &value) {
+        inline void saveImpl(const std::vector<std::uint32_t> &value) {
           m_wiscMsg->set_word_array(std::to_string(dispenseKey()), value);
         }
 
         /**
          * @brief Adds a @c std::string to the message
          */
-        inline void save(const std::string &value) {
+        inline void saveImpl(const std::string &value) {
           m_wiscMsg->set_string(std::to_string(dispenseKey()), value);
         }
 
         /**
          * @brief Adds a @c std::vector<std::string> to the message
          */
-        inline void save(const std::vector<std::string> &value) {
+        inline void saveImpl(const std::vector<std::string> &value) {
           m_wiscMsg->set_string_array(std::to_string(dispenseKey()), value);
         }
 
@@ -135,7 +160,7 @@ namespace xhal {
                  std::size_t N,
                  typename std::enable_if<std::is_integral<T>::value && !helper::is_bool<T>::value, int>::type = 0
                 >
-        inline void save(const std::array<T, N> &value) {
+        inline void saveImpl(const std::array<T, N> &value) {
           m_wiscMsg->set_binarydata(std::to_string(dispenseKey()), value.data(), N*sizeof(T));
         }
 
@@ -143,7 +168,7 @@ namespace xhal {
          * @brief Adds a @c std::map<std::uint32_t, T> to the message where @c T is a serializable type
          */
         template<typename T>
-        inline void save(const std::map<std::uint32_t, T> &value) {
+        inline void saveImpl(const std::map<std::uint32_t, T> &value) {
           // The first RPC key stores the std::map keys
           // This is required to know the std::map size at deserialization
           const auto keysKey = dispenseKey();
@@ -153,7 +178,7 @@ namespace xhal {
 
           for (const auto & elem : value) {
             keys.push_back(elem.first);
-            this->save(elem.second);
+            this->saveImpl(elem.second);
           }
 
           m_wiscMsg->set_word_array(std::to_string(keysKey), keys);
@@ -163,7 +188,7 @@ namespace xhal {
          * @brief Adds a @c std::map<std::string, T> to the message where @c T is a serializable type
          */
         template<typename T>
-        inline void save(const std::map<std::string, T> &value) {
+        inline void saveImpl(const std::map<std::string, T> &value) {
           // The first RPC key stores the std::map keys
           // This is required to know the std::map size at deserialization
           const auto keysKey = dispenseKey();
@@ -173,7 +198,7 @@ namespace xhal {
 
           for (const auto & elem : value) {
             keys.push_back(elem.first);
-            this->save(elem.second);
+            this->saveImpl(elem.second);
           }
 
           m_wiscMsg->set_string_array(std::to_string(keysKey), keys);
@@ -185,14 +210,14 @@ namespace xhal {
          * It should be used when setting the result from a function call.
          */
         template<typename T>
-        inline void save(const compat::void_holder<T> &holder) {
-          this->save(holder.get());
+        inline void saveImpl(const compat::void_holder<T> &holder) {
+          this->saveImpl(holder.get());
         }
 
         /**
          * @brief Specialization for the @c void special case
          */
-        inline void save(compat::void_holder<void>) {}
+        inline void saveImpl(compat::void_holder<void>) {}
 
         /**
          * @brief Serializes the arguments from a @c std::tuple
@@ -204,9 +229,9 @@ namespace xhal {
                  typename... Args,
                  typename std::enable_if<I < sizeof...(Args), int>::type = 0
                 >
-        inline void save(const std::tuple<Args...> &args) {
-          this->save(std::get<I>(args));
-          this->save<I+1>(args);
+        inline void saveImpl(const std::tuple<Args...> &args) {
+          this->saveImpl(std::get<I>(args));
+          this->saveImpl<I+1>(args);
         }
 
         /**
@@ -216,7 +241,7 @@ namespace xhal {
                  typename... Args,
                  typename std::enable_if<I == sizeof...(Args), int>::type = 0
                 >
-        inline void save(const std::tuple<Args...> &) {}
+        inline void saveImpl(const std::tuple<Args...> &) {}
 
       public:
 
@@ -232,7 +257,7 @@ namespace xhal {
          */
         template<typename T>
         inline MessageSerializer & operator<<(const T &t) {
-          this->save(t);
+          this->saveImpl(t);
           return *this;
         }
 
@@ -245,7 +270,7 @@ namespace xhal {
          */
         template<typename T>
         inline MessageSerializer & operator&(const T &t) {
-          this->save(t);
+          this->saveImpl(t);
           return *this;
         }
 
@@ -265,46 +290,68 @@ namespace xhal {
         const wisc::RPCMsg *m_wiscMsg;
 
         /**
-         * @brief Deserializes custom types if possible or else supresses implicit type conversion
+         * @brief Retrives @c t from the message via a user provided deserializer
+         */
+        template<typename T,
+                 typename std::enable_if<
+                   helper::is_serialize_present<MessageDeserializer, T>::value, int>::type = 0>
+        inline void loadImpl(T &t) {
+          serialize(*this, t);
+        }
+
+        /**
+         * @brief Retrives @c t from the message via a split user provided deserializer
+         */
+        template<typename T,
+                 typename std::enable_if<
+                   helper::is_load_present<MessageDeserializer, T>::value, int>::type = 0>
+        inline void loadImpl(T &t) {
+          load(*this, t);
+        }
+
+        /**
+         * @brief Supresses implicit type conversions and warns the user about the error
          *
          * Every type not defined hereunder is taken care of by this templated function.
-         * The function serves two purposes:
          *
          * 1. It delegates the deserialization to a well-known function.
          * 2. It aims at enforcing maximum type compatibility with the UW RPC API by
          *    reminding the developer that she/he can transmit defined types over the
          *    network.
          */
-        template<typename T>
-        inline void load(T &t) {
-          serialize(*this, t);
+        template<typename T,
+                 typename std::enable_if<
+                   !helper::is_serialize_present<MessageDeserializer, T>::value &&
+                   !helper::is_load_present<MessageDeserializer, T>::value, int>::type = 0>
+        inline void loadImpl(const T&) {
+          static_assert(!std::is_same<T,T>::value, "Type not natively supported. Writing custom serializer is required.");
         }
 
         /**
          * @brief Retrieves a @c std::uint32_t from the message
          */
-        inline void load(uint32_t &value) {
+        inline void loadImpl(uint32_t &value) {
           value = m_wiscMsg->get_word(std::to_string(dispenseKey()));
         }
 
         /**
          * @brief Retrieves a @c std::vector<std::uint32_t> from the message
          */
-        inline void load(std::vector<std::uint32_t> &value) {
+        inline void loadImpl(std::vector<std::uint32_t> &value) {
           value = m_wiscMsg->get_word_array(std::to_string(dispenseKey()));
         }
 
         /**
          * @brief Retrieves a @c std::string from the message
          */
-        inline void load(std::string &value) {
+        inline void loadImpl(std::string &value) {
           value = m_wiscMsg->get_string(std::to_string(dispenseKey()));
         }
 
         /**
          * @brief Retrieves a @c std::vector<std::string> from the message
          */
-        inline void load(std::vector<std::string> &value) {
+        inline void loadImpl(std::vector<std::string> &value) {
           value = m_wiscMsg->get_string_array(std::to_string(dispenseKey()));
         }
 
@@ -315,7 +362,7 @@ namespace xhal {
                  std::size_t N,
                  typename std::enable_if<std::is_integral<T>::value && !helper::is_bool<T>::value, int>::type = 0
                 >
-        inline void load(std::array<T, N> &value) {
+        inline void loadImpl(std::array<T, N> &value) {
           m_wiscMsg->get_binarydata(std::to_string(dispenseKey()), value.data(), N*sizeof(T));
         }
 
@@ -323,12 +370,12 @@ namespace xhal {
          * @brief Retrieves a @c std::map<std::uint32_t, T> from the message where @c T is a serializable type
          */
         template<typename T>
-        inline void load(std::map<std::uint32_t, T> &value) {
+        inline void loadImpl(std::map<std::uint32_t, T> &value) {
           const auto keys = m_wiscMsg->get_word_array(std::to_string(dispenseKey()));
 
           for (const auto & key: keys) {
             T val;
-            this->load(val);
+            this->loadImpl(val);
             value.emplace(key, std::move(val));
           }
         }
@@ -337,12 +384,12 @@ namespace xhal {
          * @brief Retrieves a @c std::map<std::string, T> from the message where @c T is a serializable type
          */
         template<typename T>
-        inline void load(std::map<std::string, T> &value) {
+        inline void loadImpl(std::map<std::string, T> &value) {
           const auto keys = m_wiscMsg->get_string_array(std::to_string(dispenseKey()));
 
           for (const auto & key: keys) {
             T val;
-            this->load(val);
+            this->loadImpl(val);
             value.emplace(key, std::move(val));
           }
         }
@@ -354,14 +401,14 @@ namespace xhal {
          * It should be used when setting the result from a function.
          */
         template<typename T>
-        inline void load(compat::void_holder<T> &value) {
-          this->load(value.get());
+        inline void loadImpl(compat::void_holder<T> &value) {
+          this->loadImpl(value.get());
         }
 
         /**
          * @brief Specialization for the @c void special case
          */
-        inline void load(compat::void_holder<void>) {}
+        inline void loadImpl(compat::void_holder<void>) {}
 
         /**
          * @brief Fills in a @c std::tuple with data from the message
@@ -374,9 +421,9 @@ namespace xhal {
                  typename... Args,
                  typename std::enable_if<I < sizeof...(Args), int>::type = 0
                 >
-        inline void load(std::tuple<Args...> &args) {
-          this->load(std::get<I>(args));
-          this->load<I+1>(args);
+        inline void loadImpl(std::tuple<Args...> &args) {
+          this->loadImpl(std::get<I>(args));
+          this->loadImpl<I+1>(args);
         }
 
         /**
@@ -386,7 +433,7 @@ namespace xhal {
                  typename... Args,
                  typename std::enable_if<I == sizeof...(Args), int>::type = 0
                 >
-        inline void load(std::tuple<Args...> &) { }
+        inline void loadImpl(std::tuple<Args...> &) { }
 
       public:
 
@@ -402,7 +449,7 @@ namespace xhal {
          */
         template<typename T>
         inline MessageDeserializer & operator>>(T &t) {
-          this->load(t);
+          this->loadImpl(t);
           return *this;
         }
 
@@ -415,7 +462,7 @@ namespace xhal {
          */
         template<typename T>
         inline MessageDeserializer & operator&(T &t) {
-          this->load(t);
+          this->loadImpl(t);
           return *this;
         }
 
@@ -425,8 +472,24 @@ namespace xhal {
        * @brief Provides a default (de)serialiazer in case the intrusive method is used
        */
       template<typename Message, typename T>
-      inline void serialize(Message &msg, T &t) {
+      inline auto serialize(Message &msg, T &t) -> decltype(t.serialize(msg)) {
         t.serialize(msg);
+      }
+
+      /**
+       * @brief Provides a default split serialiazer in case the intrusive method is used
+       */
+      template<typename Message, typename T>
+      inline auto save(Message &msg, const T &t) -> decltype(t.save(msg)) {
+        t.save(msg);
+      }
+
+      /**
+       * @brief Provides a default split deserialiazer in case the intrusive method is used
+       */
+      template<typename Message, typename T>
+      inline auto load(Message &msg, T &t) -> decltype(t.load(msg)) {
+        t.load(msg);
       }
 
       /**
@@ -450,6 +513,15 @@ namespace xhal {
        *     // which takes a message as parameter (i.e. the serializer or deserializer)
        *     template<class Message> inline void serialize(Message & msg) {
        *         msg & x & y;
+       *     }
+       *
+       *     // The (de)serializers can also be implemented as two split functions
+       *     // which also take a message as parameter (i.e. the serializer or deserializer)
+       *     template<class Message> inline void save(Message & msg) {
+       *         msg << x << y;
+       *     }
+       *     template<class Message> inline void load(Message & msg) {
+       *         msg >> x >> y;
        *     }
        * };
        *
@@ -475,6 +547,92 @@ namespace xhal {
           msg & elem;
         }
       }
+
+      /**
+       * @brief (De)serializer for @c std::vector<T> where @c T is a (de)serializable type
+       */
+      template<typename Message, typename T>
+      inline void serialize(Message &msg, std::vector<T> &value) {
+        // 1. Store or retrieve the vector length
+        std::uint32_t length = value.size(); // no-op during deserialization
+        msg & length;
+        value.resize(length); // no-op during serialization
+
+        // 2. Store or retrieve the vector elements
+        for (std::uint32_t i = 0; i < length; ++i) {
+          msg & value[i];
+        }
+      }
+
+      /**
+       * @brief (De)serializer for @c bool
+       */
+      template<typename Message>
+      inline void save(Message &msg, const bool &value) {
+        msg << static_cast<std::uint32_t>(value);
+      }
+      template<typename Message>
+      inline void load(Message &msg, bool &value) {
+        std::uint32_t tmp;
+        msg >> tmp;
+        value = tmp;
+      }
+
+      /**
+       * @brief (De)serializer for @c std::uint8_t
+       */
+      template<typename Message>
+      inline void save(Message &msg, const std::uint8_t &value) {
+        msg << static_cast<std::uint32_t>(value);
+      }
+      template<typename Message>
+      inline void load(Message &msg, std::uint8_t &value) {
+        std::uint32_t tmp;
+        msg >> tmp;
+        value = tmp;
+      }
+
+      /**
+       * @brief (De)serializer for @c std::uint16_t
+       */
+      template<typename Message>
+      inline void save(Message &msg, const std::uint16_t &value) {
+        msg << static_cast<std::uint32_t>(value);
+      }
+      template<typename Message>
+      inline void load(Message &msg, std::uint16_t &value) {
+        std::uint32_t tmp;
+        msg >> tmp;
+        value = tmp;
+      }
+
+      /**
+       * @brief (De)serializer for the @float type
+       *
+       * Works only if @sizeof(float) is 4 and the representation 
+       * is the same on the client and the server.
+       */
+      template<typename Message>
+      inline void save(Message &msg, const float &value) {
+        // This serializer works only for IEEE 754 floating point numbers
+        static_assert(std::numeric_limits<float>::is_iec559,
+                      "Floating point representation not supported by the serializer.");
+
+        std::uint32_t tmp;
+        std::memcpy(&tmp, &value, sizeof(std::uint32_t));
+        msg << tmp;
+      }
+      template<typename Message>
+      inline void load(Message &msg, float &value) {
+        // This deserializer works only for IEEE 754 floating point numbers
+        static_assert(std::numeric_limits<float>::is_iec559,
+                      "Floating point representation not supported by the deserializer.");
+
+        std::uint32_t tmp;
+        msg >> tmp;
+        std::memcpy(&value, &tmp, sizeof(float));
+      }
+
     }
   }
 }

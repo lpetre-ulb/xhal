@@ -37,13 +37,15 @@ XHAL_VER_MAJOR:=$(shell $(ConfigDir)/tag2rel.sh | awk '{split($$0,a," "); print 
 XHAL_VER_MINOR:=$(shell $(ConfigDir)/tag2rel.sh | awk '{split($$0,a," "); print a[2];}' | awk '{split($$0,b,":"); print b[2];}')
 XHAL_VER_PATCH:=$(shell $(ConfigDir)/tag2rel.sh | awk '{split($$0,a," "); print a[3];}' | awk '{split($$0,b,":"); print b[2];}')
 
-IncludeDirs+= $(XDAQ_ROOT)/include
 IncludeDirs+= $(PackageIncludeDir)
 IncludeDirs+= $(PackageIncludeDir)/xhal/extern
-INC=$(IncludeDirs:%=-I%)
 
 Libraries+=-llog4cplus -lxerces-c -lstdc++
+LibraryDirs+=$(PackageLibraryDir)
+
 ifeq ($(Arch),x86_64)
+IncludeDirs+= $(XDAQ_ROOT)/include
+
 Libraries+=-lwiscrpcsvc
 LibraryDirs+=$(XDAQ_ROOT)/lib
 LibraryDirs+=$(WISCRPC_ROOT)/lib
@@ -51,8 +53,7 @@ else
 
 endif
 
-LibraryDirs+=$(PackageLibraryDir)
-
+INC=$(IncludeDirs:%=-I%)
 LDFLAGS+=$(LibraryDirs:%=-L%)
 
 SRCS_XHAL   = $(wildcard $(PackageSourceDir)/common/utils/*.cpp)

@@ -127,6 +127,50 @@ namespace xhal {
         template<typename T>
         using is_tuple = is_tuple_impl<typename std::decay<T>::type>;
 
+        /**
+         * @brief Defines the @c is_func_present class which allows to check the existence of @func
+         *
+         * The function parameter types are given as the @c Args templated arguments while the
+         * lookup result is available in the member @c value.
+         *
+         * \details
+         *
+         * Internally the class work as follow.
+         *
+         * Two overloads of the @c test function are defined. The first one always returns the @no
+         * type while the second one return the type which would be returned if func(Args...) was
+         * called.
+         *
+         * As per SFINAE, the second function is not considered if the func(Args...) does not
+         * exist. Whether func(Args...) exists is as simple as checking the return type of
+         * test<AArgs...>.
+         *
+         * When both overloads exist (i.e. func(Args...) exists), the second overload is prefered
+         * because the argument @c 0  matches better @c int than @c ...
+         */
+        #define XHAL_COMMON_RPC_HELPER_FUNCTION_PRESENT(func)                                 \
+        template <typename... Args>                                                           \
+        class is_##func##_present                                                             \
+        {                                                                                     \
+          struct no {};                                                                       \
+                                                                                              \
+          template <typename... AArgs>                                                        \
+          static no test(...);                                                                \
+                                                                                              \
+          template <typename... AArgs>                                                        \
+          static decltype(func(std::declval<AArgs&>()...)) test(int);                         \
+                                                                                              \
+        public:                                                                               \
+                                                                                              \
+          static constexpr bool value = !std::is_same<no, decltype(test<Args...>(0))>::value; \
+        };
+
+        XHAL_COMMON_RPC_HELPER_FUNCTION_PRESENT(serialize)
+        XHAL_COMMON_RPC_HELPER_FUNCTION_PRESENT(save)
+        XHAL_COMMON_RPC_HELPER_FUNCTION_PRESENT(load)
+
+        #undef XHAL_COMMON_RPC_HELPER_FUNCTION_PRESENT
+
       }
     }
   }
