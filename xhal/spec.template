@@ -224,7 +224,6 @@ popd
 %files client
 %defattr(-,root,root,0755)
 %{_prefix}/lib/libxhal-client.so*
-%{_prefix}/lib/libxhal-rpcman.so*
 
 %dir
 
