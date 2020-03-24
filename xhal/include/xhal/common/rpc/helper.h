@@ -47,7 +47,7 @@ namespace xhal {
           using decay_args_type = std::tuple<typename std::decay<Args>::type...>;
 
           static constexpr inline auto forward_as_tuple() {
-            return [](Args&&... args){ return std::forward_as_tuple(args...); };
+            return [](const Args&... args){ return std::forward_as_tuple(args...); };
           }
         };
 
