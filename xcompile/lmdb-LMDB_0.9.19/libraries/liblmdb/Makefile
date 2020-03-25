@@ -18,18 +18,16 @@
 # There may be other macros in mdb.c of interest. You should
 # read mdb.c before changing any of them.
 #
-#CC	= gcc
-#AR	= ar
-#W	= -W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized
-#THREADS = -pthread
-#OPT = -O2 -g
-#CFLAGS	= $(THREADS) $(OPT) $(W) $(XCFLAGS)
-#LDLIBS	=
-SOLIBS	= -lpthread
-include ../../../apps.common.mk
-CFLAGS+= -pthread
+CC	= gcc
+AR	= ar
+W	= -W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized
+THREADS = -pthread
+OPT = -O2 -g
+CFLAGS	= $(THREADS) $(OPT) $(W) $(XCFLAGS)
+LDLIBS	=
+SOLIBS	=
 SOEXT	= .so
-prefix = /home/mdalchen/work/xhal/xcompile/lmdb-LMDB_0.9.19
+prefix	= /usr/local
 exec_prefix = $(prefix)
 bindir = $(exec_prefix)/bin
 libdir = $(exec_prefix)/lib

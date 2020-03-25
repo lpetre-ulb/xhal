@@ -16,7 +16,6 @@ ConfigDir:=$(ProjectPath)/config
 include $(ConfigDir)/mfCommonDefs.mk
 
 ifeq ($(Arch),x86_64)
-include $(ConfigDir)/mfPythonDefs.mk
 CFLAGS=-Wall -pthread
 ADDFLAGS=-fPIC -std=c++14 -m64
 else
@@ -60,31 +59,23 @@ SRCS_XHAL   = $(wildcard $(PackageSourceDir)/common/utils/*.cpp)
 SRCS_XHAL  += $(wildcard $(PackageSourceDir)/common/rpc/*.cpp)
 SRCS_CLIENT = $(wildcard $(PackageSourceDir)/client/*.cpp)
 SRCS_SERVER = $(wildcard $(PackageSourceDir)/server/*.cpp)
-SRCS_XHALPY = $(wildcard $(PackageSourceDir)/client/python_wrappers/*.cpp)
-SRCS_RPCMAN = $(wildcard $(PackageSourceDir)/client/rpc_manager/*.cpp)
 # SRCS_EXES     = $(wildcard $(PackageSourceDir)/*.cxx)
 # SRCS_TEST_EXES= $(wildcard $(PackageTestSourceDir)/*.cxx)
 
 AUTODEPS_XHAL   = $(patsubst $(PackageSourceDir)/%.cpp,$(PackageObjectDir)/%.d,$(SRCS_XHAL))
 AUTODEPS_CLIENT = $(patsubst $(PackageSourceDir)/%.cpp,$(PackageObjectDir)/%.d,$(SRCS_CLIENT))
 AUTODEPS_SERVER = $(patsubst $(PackageSourceDir)/%.cpp,$(PackageObjectDir)/%.d,$(SRCS_SERVER))
-AUTODEPS_XHALPY = $(patsubst $(PackageSourceDir)/%.cpp,$(PackageObjectDir)/%.d,$(SRCS_XHALPY))
-AUTODEPS_RPCMAN = $(patsubst $(PackageSourceDir)/%.cpp,$(PackageObjectDir)/%.d,$(SRCS_RPCMAN))
 
 OBJS_XHAL   = $(patsubst %.d,%.o,$(AUTODEPS_XHAL))
 OBJS_CLIENT = $(patsubst %.d,%.o,$(AUTODEPS_CLIENT))
 OBJS_SERVER = $(patsubst %.d,%.o,$(AUTODEPS_SERVER))
-OBJS_XHALPY = $(patsubst %.d,%.o,$(AUTODEPS_XHALPY))
-OBJS_RPCMAN = $(patsubst %.d,%.o,$(AUTODEPS_RPCMAN))
 
 XHAL_LIB   = $(PackageLibraryDir)/libxhal-base.so
 CLIENT_LIB = $(PackageLibraryDir)/libxhal-client.so
 SERVER_LIB = $(PackageLibraryDir)/libxhal-server.so
-XHALPY_LIB = $(PackageLibraryDir)/xhalpy.so
-RPCMAN_LIB = $(PackageLibraryDir)/libxhal-rpcman.so
 
 ifeq ($(Arch),x86_64)
-TargetLibraries:= xhal-base xhal-server xhal-client xhalpy xhal-rpcman
+TargetLibraries:= xhal-base xhal-server xhal-client
 else
 TargetLibraries:= xhal-base xhal-server
 endif
@@ -132,7 +123,7 @@ specificspecupdate: $(PackageSpecFile)
 # destination path macro we'll use below
 df = $(PackageObjectDir)/$(*F)
 
-.PHONY: xhal-base xhal-client xhal-server xhal-rpcman
+.PHONY: xhal-base xhal-client xhal-server
 
 ## @xhal Compile all target libraries
 build: $(TargetLibraries)
@@ -147,7 +138,7 @@ rpmprep: build doc
 # Define as dependency everything that should cause a rebuild
 TarballDependencies = $(XHAL_LIB) $(SERVER_LIB) Makefile xhal.mk spec.template $(PackageIncludeDir)/packageinfo.h
 ifeq ($(Arch),x86_64)
-TarballDependencies+= $(CLIENT_LIB) $(XHALPY_LIB) $(RPCMAN_LIB)
+TarballDependencies+= $(CLIENT_LIB)
 else
 endif
 
@@ -186,12 +177,6 @@ xhal-client: $(CLIENT_LIB)
 ## @xhal Compile the xhal-server library
 xhal-server: $(SERVER_LIB)
 
-## @xhal Compile the xhal RPC manager library
-xhal-rpcman: xhal-base $(RPCMAN_LIB)
-
-## @xhal Compile the xhal python bindings
-xhalpy: xhal-base xhal-rpcman $(XHALPY_LIB)
-
 ## adapted from http://make.mad-scientist.net/papers/advanced-auto-dependency-generation/
 ## Generic object creation rule, generate dependencies and use them later
 $(PackageObjectDir)/%.o: $(PackageSourceDir)/%.cpp Makefile
@@ -225,16 +210,6 @@ $(SERVER_LIB): $(OBJS_SERVER)
 	$(CXX) $(ADDFLAGS) $(LDFLAGS) $(SOFLAGS) -o $(@D)/$(LibraryFull) $^ $(Libraries)
 	$(link-sonames)
 
-$(RPCMAN_LIB): $(OBJS_RPCMAN)
-	$(MakeDir) -p $(@D)
-	$(CXX) $(ADDFLAGS) $(LDFLAGS) $(SOFLAGS) -o $(@D)/$(LibraryFull) $^ $(Libraries)
-	$(link-sonames)
-
-$(XHALPY_LIB): $(OBJS_XHALPY) $(XHAL_LIB) $(RPCMAN_LIB)
-	$(MakeDir) -p $(@D)
-	$(CXX) $(ADDFLAGS) $(LDFLAGS) $(SOFLAGS) -L$(PYTHON_LIB_PREFIX) -o $(@D)/$(LibraryFull) $^ $(Libraries) -lboost_python -l$(PYTHON_LIB) -lxhal-base -lxhal-rpcman
-	$(link-sonames)
-
 ifeq ($(Arch),x86_64)
 else
 TARGET_BOARD?=ctp7
@@ -246,7 +221,7 @@ uninstall: crosslibuninstall
 endif
 
 clean:
-	$(RM) $(OBJS_XHAL) $(OBJS_CLIENT) $(OBJS_SERVER) $(OBJS_RPCMAN) $(OBJS_XHALPY)
+	$(RM) $(OBJS_XHAL) $(OBJS_CLIENT) $(OBJS_SERVER)
 	$(RM) $(PackageLibraryDir)
 	$(RM) $(PackageExecDir)
 	$(RM) $(PackagePath)/$(PackageDir)
