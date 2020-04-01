@@ -1,6 +1,4 @@
-SUBPACKAGES := \
-        python \
-        xhal
+SUBPACKAGES := xhal
 
 SUBPACKAGES.CLEAN    := $(patsubst %,%.clean,    $(SUBPACKAGES))
 SUBPACKAGES.DEBUG    := $(patsubst %,%.debug,    $(SUBPACKAGES))
@@ -95,5 +93,3 @@ $(SUBPACKAGES.UNINSTALL):
 
 $(SUBPACKAGES.RELEASE): $(SUBPACKAGES)
 	$(MAKE) -C $(patsubst %.release,%, $@) release
-
-python:
